@@ -8,18 +8,11 @@ export default function ThunderLightningPage() {
   const videos = [
     {
       title: "Thunder and Lightning",
-    //   src: "/Thunder%20and%20Lightning.mov",
+      src: "https://res.cloudinary.com/dbglkfj2z/video/upload/v1776797191/my-emdr/media/media_69c70af6f992b944bccd41a9_1776797154731.mov",
     },
-
-
-
-
-
-
-
     {
       title: "Thunder and Lightning Copy",
-    //   src: "/copy_CACA7174-65B8-4227-B2D8-8CCB8BE1D791%20%281%29.MOV",
+      src: "https://res.cloudinary.com/dbglkfj2z/video/upload/v1776797191/my-emdr/media/media_69c70af6f992b944bccd41a9_1776797154731.mov",
     },
   ];
 

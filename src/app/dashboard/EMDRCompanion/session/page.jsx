@@ -1,6 +1,9 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useStoredAuth } from "@/redux/authStorage";
+
+const FIXED_SESSION_VIDEO_ID = "69e7c604fd68f032aa7a2c61";
 
 const formatTime = (timeInSeconds) => {
   if (!Number.isFinite(timeInSeconds) || timeInSeconds < 0) {
@@ -17,15 +20,24 @@ const formatTime = (timeInSeconds) => {
 export default function EMDRSession() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { token } = useStoredAuth();
   const [checkedItems, setCheckedItems] = useState({});
   const [videoEnded, setVideoEnded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [videoSrc, setVideoSrc] = useState("");
+  const [isLoadingVideo, setIsLoadingVideo] = useState(true);
+  const [videoError, setVideoError] = useState("");
   const videoRef = useRef(null);
   const journeyId = searchParams.get("journeyId") || "";
   const journeyTitle = searchParams.get("title") || "";
   const sessionId = searchParams.get("sessionId") || "";
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
   const questions = [
     {
       id: 1,
@@ -55,6 +67,63 @@ export default function EMDRSession() {
       ],
     },
   ];
+
+  useEffect(() => {
+    const fetchSessionVideo = async () => {
+      if (!baseUrl) {
+        setVideoError("Video service is not configured.");
+        setIsLoadingVideo(false);
+        return;
+      }
+
+      if (!token) {
+        setVideoError("Please sign in again to load the session video.");
+        setIsLoadingVideo(false);
+        return;
+      }
+
+      try {
+        setIsLoadingVideo(true);
+        setVideoError("");
+
+        const response = await fetch(`${baseUrl}/api/media?page=1&limit=20`, {
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result?.success) {
+          throw new Error("Failed to fetch session video.");
+        }
+
+        const sessionVideo = (result?.data?.media || []).find(
+          (item) =>
+            item?._id === FIXED_SESSION_VIDEO_ID &&
+            item?.mediaType === "video" &&
+            item?.status === "active" &&
+            item?.categoryId?.categoryName?.trim()?.toLowerCase() === "videos"
+        );
+
+        if (!sessionVideo?.url) {
+          throw new Error("The fixed session video was not found in the Videos category.");
+        }
+
+        setVideoSrc(sessionVideo.url);
+      } catch (error) {
+        console.error("Error fetching session video:", error);
+        setVideoError(
+          error?.message || "Unable to load the session video right now."
+        );
+      } finally {
+        setIsLoadingVideo(false);
+      }
+    };
+
+    fetchSessionVideo();
+  }, [baseUrl, token]);
+
   const handleCheck = (questionId, optionIndex) => {
     setCheckedItems((currentItems) => ({
       ...currentItems,
@@ -104,18 +173,32 @@ export default function EMDRSession() {
     <div className="min-h-screen bg-gradient-to-br from-stone-300 to-stone-400 flex items-center justify-center p-3 rounded-2xl">
       <div className="relative w-full ">
         <div className="relative">
-          <video
-            ref={videoRef}
-            src="/homeImage/Video 1.mp4"
-            className="w-full h-auto rounded-3xl shadow-2xl"
-            preload="metadata"
-            onEnded={handleVideoEnd}
-            onLoadedMetadata={(event) => setDuration(event.currentTarget.duration || 0)}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
-          />
-          {!isPlaying && !videoEnded && (
+          {isLoadingVideo ? (
+            <div className="flex min-h-[420px] items-center justify-center rounded-3xl bg-black/20 px-6 text-center text-white shadow-2xl">
+              Loading session video...
+            </div>
+          ) : videoError ? (
+            <div className="flex min-h-[420px] items-center justify-center rounded-3xl bg-red-50 px-6 text-center text-red-600 shadow-2xl">
+              {videoError}
+            </div>
+          ) : (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              className="w-full h-auto rounded-3xl shadow-2xl"
+              preload="metadata"
+              onEnded={handleVideoEnd}
+              onLoadedMetadata={(event) =>
+                setDuration(event.currentTarget.duration || 0)
+              }
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onTimeUpdate={(event) =>
+                setCurrentTime(event.currentTarget.currentTime)
+              }
+            />
+          )}
+          {!isLoadingVideo && !videoError && !isPlaying && !videoEnded && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <button
                 onClick={handlePlayPause}
@@ -131,56 +214,58 @@ export default function EMDRSession() {
               </button>
             </div>
           )}
-          <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-black/55 px-5 py-4 text-white backdrop-blur-md">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handlePlayPause}
-                  className="flex min-w-28 items-center justify-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/25"
-                >
-                  {isPlaying ? (
-                    <svg
-                      className="h-4 w-4"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M6 5h4v14H6zm8 0h4v14h-4z" />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-4 w-4"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
-                  {isPlaying ? "Pause" : "Play"}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleStop}
-                  className="flex min-w-28 items-center justify-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/25"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
+          {!isLoadingVideo && !videoError ? (
+            <div className="absolute bottom-5 left-5 right-5 rounded-2xl bg-black/55 px-5 py-4 text-white backdrop-blur-md">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handlePlayPause}
+                    className="flex min-w-28 items-center justify-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/25"
                   >
-                    <path d="M6 6h12v12H6z" />
-                  </svg>
-                  Stop
-                </button>
+                    {isPlaying ? (
+                      <svg
+                        className="h-4 w-4"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M6 5h4v14H6zm8 0h4v14h-4z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="h-4 w-4"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    )}
+                    {isPlaying ? "Pause" : "Play"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStop}
+                    className="flex min-w-28 items-center justify-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium transition-colors hover:bg-white/25"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M6 6h12v12H6z" />
+                    </svg>
+                    Stop
+                  </button>
+                </div>
+                <div className="text-sm font-medium">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </div>
               </div>
-              <div className="text-sm font-medium">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
+              <p className="mt-2 text-xs text-white/80">
+                Remaining {formatTime(remainingTime)}
+              </p>
             </div>
-            <p className="mt-2 text-xs text-white/80">
-              Remaining {formatTime(remainingTime)}
-            </p>
-          </div>
+          ) : null}
           {videoEnded && (
             <div className="absolute right-6 top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl p-6 w-80 animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-lg font-serif text-stone-900 mb-6">
