@@ -127,7 +127,7 @@ export default function MyResources() {
               Access your saved safe place audio visualization.
             </p>
             <Link
-              href="/dashboard/resources/story"
+              href="/dashboard/EMDRCompanion/session/next"
               className="text-[#4A7C59] text-sm font-medium hover:underline"
             >
               Listen Now

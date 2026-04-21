@@ -51,7 +51,7 @@ export default function AssessmentsPage() {
               <p className="text-[#7A7A7A] text-[18px] leading-relaxed mb-8">
                 Take new assessments or retake standard questionnairess
               </p>
-              <Link href="/dashboard/EMDRCompanion">
+              <Link href="/dashboard/EMDRCompanion/session">
                 <button className="w-full text-[18px] bg-[#4A7C59] hover:bg-[#4a6a4c] text-white font-normal py-4 rounded-xl transition-colors duration-200">
                   View Assessments
                 </button>

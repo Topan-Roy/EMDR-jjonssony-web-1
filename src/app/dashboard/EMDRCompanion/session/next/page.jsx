@@ -271,9 +271,9 @@ export default function CBTFormulation() {
 
   return (
     <div className="min-h-screen relativebg-white/40 ">
-   
+
       <div className="relative z-10 min-h-screen overflow-y-auto bg-white/40 rounded-2xl">
-     
+
         <div className="sticky top-0  backdrop-blur-sm pt-8 pb-4 px-8 z-20">
           <h1 className="text-2xl font-serif text-stone-900">
             My CBT Formulation
@@ -290,13 +290,12 @@ export default function CBTFormulation() {
               <div key={node.id} className="relative mb-12">
                 <div className="text-center mb-10 mt-12">
                   <h2
-                    className={`font-serif text-[#0F1912] text-xl transition-all duration-500 ${
-                      isCompleted
+                    className={`font-serif text-[#0F1912] text-xl transition-all duration-500 ${isCompleted
                         ? "text-[#0F1912] text-xl "
                         : isCurrent
-                        ? "text-[#0F1912] text-xl"
-                        : "text-[#0F1912] text-xl"
-                    }`}
+                          ? "text-[#0F1912] text-xl"
+                          : "text-[#0F1912] text-xl"
+                      }`}
                   >
                     {node.section}
                   </h2>
@@ -310,30 +309,27 @@ export default function CBTFormulation() {
                     className="relative hover:scale-105 transition-all duration-300"
                   >
                     <div
-                      className={`rounded-full border-4 py-1 px-10  border-[#4A7C59] text-center shadow-2xl transition-all duration-500 ${
-                        isCompleted
+                      className={`rounded-full border-4 py-1 px-10  border-[#4A7C59] text-center shadow-2xl transition-all duration-500 ${isCompleted
                           ? "bg-[#f6f2f4] text-[#0F1912] text-xl px-20 py-8"
                           : isCurrent
-                          ? "bg-white backdrop-blur-sm px-40 py-20 text-[#0F1912] text-xl"
-                          : "bg-white backdrop-blur-sm px-24 py-12 text-[#0F1912] text-xl"
-                      }`}
+                            ? "bg-white backdrop-blur-sm px-40 py-20 text-[#0F1912] text-xl"
+                            : "bg-white backdrop-blur-sm px-24 py-12 text-[#0F1912] text-xl"
+                        }`}
                     >
                       <h3
-                        className={`font-serif text-stone-900 transition-all duration-500 ${
-                          isCompleted
+                        className={`font-serif text-stone-900 transition-all duration-500 ${isCompleted
                             ? "text-xl"
                             : isCurrent
-                            ? "text-4xl mb-4"
-                            : "text-3xl mb-3"
-                        }`}
+                              ? "text-4xl mb-4"
+                              : "text-3xl mb-3"
+                          }`}
                       >
                         {node.title}
                       </h3>
                       {!isCompleted && (
                         <p
-                          className={`text-stone-600 italic transition-all duration-500 ${
-                            isCurrent ? "text-lg" : "text-base"
-                          }`}
+                          className={`text-stone-600 italic transition-all duration-500 ${isCurrent ? "text-lg" : "text-base"
+                            }`}
                         >
                           {node.subtitle}
                         </p>
@@ -344,9 +340,8 @@ export default function CBTFormulation() {
                 {index < timelineNodes.length - 1 && (
                   <div className="flex justify-center mt-10 mb-4 ">
                     <div
-                      className={`bg-[#4A7C59] transition-all duration-500 ${
-                        isCompleted ? "w-0.5 h-24" : "w-0.5 h-32"
-                      }`}
+                      className={`bg-[#4A7C59] transition-all duration-500 ${isCompleted ? "w-0.5 h-24" : "w-0.5 h-32"
+                        }`}
                     ></div>
                   </div>
                 )}
@@ -450,9 +445,8 @@ export default function CBTFormulation() {
                     >
                       <motion.div
                         layout
-                        className={`rounded-3xl p-5 border-4 border-[#4A7C59] flex flex-col items-center justify-center text-center shadow-xl transition-all duration-500 aspect-[3/2] w-full ${
-                          answers.thoughts?.completed ? "bg-white" : "bg-white"
-                        }`}
+                        className={`rounded-3xl p-5 border-4 border-[#4A7C59] flex flex-col items-center justify-center text-center shadow-xl transition-all duration-500 aspect-[3/2] w-full ${answers.thoughts?.completed ? "bg-white" : "bg-white"
+                          }`}
                       >
                         <h3 className="font-serif text-stone-900 text-2xl md:text-3xl mb-1 md:mb-2">
                           Thoughts
@@ -481,11 +475,10 @@ export default function CBTFormulation() {
                           className="hover:scale-105 transition-all duration-300 relative z-10 w-full"
                         >
                           <div
-                            className={`rounded-3xl py-10 px-3 border-4 border-[#4A7C59] flex flex-col items-center justify-center text-center shadow-xl transition-all duration-500 aspect-[3/2] w-full ${
-                              answers.feelings?.completed
+                            className={`rounded-3xl py-10 px-3 border-4 border-[#4A7C59] flex flex-col items-center justify-center text-center shadow-xl transition-all duration-500 aspect-[3/2] w-full ${answers.feelings?.completed
                                 ? "bg-white"
                                 : "bg-white"
-                            }`}
+                              }`}
                           >
                             <h3 className="font-serif text-stone-900 text-2xl md:text-3xl mb-1 md:mb-2">
                               Feelings
@@ -554,11 +547,10 @@ export default function CBTFormulation() {
                       className="w-full relative hover:scale-[1.05] transition-all duration-300"
                     >
                       <div
-                        className={`rounded-3xl border-4  border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${
-                          answers.consequences?.completed
+                        className={`rounded-3xl border-4  border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${answers.consequences?.completed
                             ? "bg-[#f4f4f4]"
                             : "bg-white"
-                        }`}
+                          }`}
                       >
                         <h3 className="font-serif text-4xl text-[#0F1912] mb-4">
                           The Consequences
@@ -588,11 +580,10 @@ export default function CBTFormulation() {
                       className="w-full relative hover:scale-[1.05] transition-all duration-300"
                     >
                       <div
-                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${
-                          answers.superpowers?.completed
+                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${answers.superpowers?.completed
                             ? "bg-[#f5f5f2]"
                             : "bg-white/90 backdrop-blur-md"
-                        }`}
+                          }`}
                       >
                         <h3 className="font-serif text-4xl text-[#0F1912] mb-4">
                           Your Superpowers
