@@ -63,40 +63,80 @@ export default function ConsentPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log("Submitting Consent with formData:", formData);
         const config = {
             headers: { Authorization: `Bearer ${token}` }
         };
 
+        // Validate that all mandatory consents are checked
+        if (!formData.understandTreatment) {
+            alert("Please check the 'I understand the nature of EMDR therapy' box.");
+            setIsSubmitting(false);
+            return;
+        }
+        if (!formData.dataProcessing) {
+            alert("Please check the 'I understand how my data will be processed' box.");
+            setIsSubmitting(false);
+            return;
+        }
+        if (!formData.voluntaryConsent) {
+            alert("Please check the 'I am participating voluntarily' box.");
+            setIsSubmitting(false);
+            return;
+        }
+        if (!formData.emergencyProtocol) {
+            alert("Please check the 'I understand the emergency procedures' box.");
+            setIsSubmitting(false);
+            return;
+        }
+        if (!formData.signature?.trim()) {
+            alert("Please type your name in the Electronic Signature field.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             // 1. Profile POST
-            await axios.post(`${baseUrl}/api/onboarding/profile`, {
+            const profileData = {
                 dateOfBirth: formData.dob,
                 sex: formData.sex
-            }, config);
+            };
+            console.log("Step 1: Profile POST", profileData);
+            await axios.post(`${baseUrl}/api/onboarding/profile`, profileData, config);
 
             // 2. Safety Check POST
-            await axios.post(`${baseUrl}/api/onboarding/safety-check`, {
+            const safetyData = {
                 activeSuicidalThoughts: formData.contraindications.includes("suicidal"),
                 historyOfSeizures: formData.contraindications.includes("seizures"),
                 pregnancy: formData.contraindications.includes("pregnancy"),
                 severeDissociativeDisorders: formData.contraindications.includes("dissociative"),
                 activePsychosis: formData.contraindications.includes("psychosis")
-            }, config);
+            };
+            console.log("Step 2: Safety Check POST", safetyData);
+            await axios.post(`${baseUrl}/api/onboarding/safety-check`, safetyData, config);
 
             // 3. Consent POST
-            await axios.post(`${baseUrl}/api/onboarding/consent`, {
+            const consentData = {
                 understoodEMDRNatureAndRisks: formData.understandTreatment,
                 agreedToGDPR: formData.dataProcessing,
                 participatingVoluntarily: formData.voluntaryConsent,
                 savedCrisisSupportNumbers: formData.emergencyProtocol,
                 optionalResearchParticipation: formData.researchConsent,
                 electronicSignature: formData.signature
-            }, config);
+            };
+            console.log("Step 3: Consent POST", consentData);
+            await axios.post(`${baseUrl}/api/onboarding/consent`, consentData, config);
 
             router.push("/assessment/phq9");
         } catch (error) {
-            console.error("Onboarding error:", error);
-            // Even on error, proceed to keep the flow moving as requested (no alerts)
+            console.error("Onboarding error at step:", error.config?.url);
+            console.error("Error details:", JSON.stringify(error.response?.data || error, null, 2));
+            // Stop redirecting on validation error so user can fix it
+            if (error.response?.status === 400) {
+                alert("There was a validation error. Please check your information and try again.");
+                setIsSubmitting(false);
+                return;
+            }
             router.push("/assessment/phq9");
         } finally {
             setIsSubmitting(false);

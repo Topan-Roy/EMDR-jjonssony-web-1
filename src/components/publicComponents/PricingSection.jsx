@@ -127,6 +127,7 @@ const PricingSection = ({ compact = false }) => {
               onClick={() => {
                 // Save selected plan details
                 localStorage.setItem("selectedPlan", JSON.stringify({
+                  id: plan.id,
                   name: plan.name,
                   price: plan.price
                 }));

@@ -49,10 +49,16 @@ export default function Gad7Page() {
                     <div className="flex-1 text-center pb-4 text-sm font-semibold tracking-wide uppercase text-gray-300">DES-II</div>
                 </div>
 
-                <div className="flex border-l-4 border-[#7A7A7A] pl-6 py-2 mb-10 bg-gradient-to-r from-gray-50 to-transparent rounded-lg">
+                <div className="flex border-l-4 border-[#7A7A7A] pl-6 py-2 mb-10 bg-gradient-to-r from-gray-50 to-transparent rounded-lg justify-between items-center">
                     <div>
                         <h3 className="text-2xl font-serif text-[#1e293b] mb-2">Generalized Anxiety Disorder (GAD-7)</h3>
                         <p className="text-[#64748b]">Over the last 2 weeks, how often have you been bothered by the following problems?</p>
+                    </div>
+                    <div className="bg-[#1e293b] text-white px-4 py-2 rounded-lg text-center min-w-[80px]">
+                        <div className="text-[10px] uppercase font-bold opacity-70">Current Score</div>
+                        <div className="text-2xl font-serif">
+                            {Object.values(gad7Answers).reduce((acc, val) => acc + val, 0)}
+                        </div>
                     </div>
                 </div>
 

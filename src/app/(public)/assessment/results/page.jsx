@@ -12,24 +12,28 @@ import PaymentModal from '@/components/publicComponents/PaymentModal';
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
 export default function ResultsPage() {
+    const { assessmentResults } = useAssessment();
     const router = useRouter();
     const { token } = useStoredAuth();
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [selectedPlan, setSelectedPlan] = useState({ name: "Hero Plan", price: "120" });
+    const [selectedPlan, setSelectedPlan] = useState({ id: "", name: "Hero Plan", price: "120" });
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                if (!token) return;
-
-                // Fetch assessment results
-                const response = await axios.get(`${baseUrl}/api/assessment/result`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (response.data.success) {
-                    setResults(response.data.data);
+                // First try getting results from context
+                if (assessmentResults) {
+                    setResults(assessmentResults);
+                } else if (token) {
+                    // Fallback to fetch if context is empty (e.g., page refresh)
+                    const response = await axios.get(`${baseUrl}/api/assessment/result`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (response.data.success) {
+                        setResults(response.data.data);
+                    }
                 }
 
                 // Get plan from localStorage
@@ -45,7 +49,7 @@ export default function ResultsPage() {
         };
 
         fetchData();
-    }, []);
+    }, [assessmentResults, token]);
 
     if (loading) {
         return (
@@ -65,9 +69,10 @@ export default function ResultsPage() {
         requiresProfessionalSupport: false
     };
 
-    // Rule: Total score (Depression + Anxiety) must be 30 or more to subscribe
+    // Rule: Either Total score (Depression + Anxiety) >= 30 OR Dissociation score >= 30 to subscribe
     const totalScore = scores.depression.score + scores.anxiety.score;
-    const canSubscribe = totalScore >= 30 && !requiresProfessionalSupport;
+    const dissociationScore = scores.dissociation.score;
+    const canSubscribe = (totalScore >= 30 || dissociationScore >= 30);
 
     return (
         <div className="min-h-screen bg-[#FCF9F4] pt-24 px-6 md:px-10 font-sans pb-20">
@@ -210,6 +215,7 @@ export default function ResultsPage() {
                 onClose={() => setIsPaymentModalOpen(false)}
                 planName={selectedPlan.name}
                 price={selectedPlan.price}
+                planId={selectedPlan.id}
             />
         </div>
     );

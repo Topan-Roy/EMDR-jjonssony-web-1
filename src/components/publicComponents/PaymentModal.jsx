@@ -13,7 +13,8 @@ import {
   CardCvcElement,
 } from "@stripe/react-stripe-js";
 import { AppConstants } from "@/utils/app_constant";
-import { createPaymentIntent } from "@/services/stripeService";
+import { createPaymentIntent, confirmPayment } from "@/services/stripeService";
+import { useStoredAuth } from "@/redux/authStorage";
 import { useSubscribeMutation } from "@/redux/api/subscriptionApi";
 
 // Initialize Stripe
@@ -35,7 +36,7 @@ const ELEMENT_OPTIONS = {
   },
 };
 
-const CheckoutForm = ({ onClose, planName, price, planId, clientSecret }) => {
+const CheckoutForm = ({ onClose, planName, price, planId, clientSecret, token }) => {
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,15 +63,12 @@ const CheckoutForm = ({ onClose, planName, price, planId, clientSecret }) => {
       } else if (result.paymentIntent && result.paymentIntent.status === "succeeded") {
         console.log("✅ Payment successful!");
         try {
-          await subscribe({
-            planId: planId,
-            transactionId: result.paymentIntent.id,
-          }).unwrap();
+          await confirmPayment(result.paymentIntent.id, token);
           onClose();
         } catch (backendError) {
           console.error("Backend Error:", backendError);
-          // Show the actual error from server to help debugging
-          setError(backendError?.data?.message || backendError?.message || "Subscription activation failed on server.");
+          setError(backendError?.response?.data?.message || backendError?.message || "Payment confirmation failed on server.");
+          return;
         }
       }
     } catch (err) {
@@ -94,31 +92,31 @@ const CheckoutForm = ({ onClose, planName, price, planId, clientSecret }) => {
 
       <div className="space-y-5">
         <div className="flex items-center gap-2 text-[#4A7C59] mb-1">
-            <ShieldCheck size={18} />
-            <span className="text-sm font-semibold uppercase tracking-wider">Secure Payment</span>
+          <ShieldCheck size={18} />
+          <span className="text-sm font-semibold uppercase tracking-wider">Secure Payment</span>
         </div>
-        
+
         {/* Only Individual Fields - No logo/branding will appear here */}
         <div className="space-y-4">
-            <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 z-10">
-                    <CreditCard size={20} />
-                </div>
-                <div className="w-full pl-12 pr-4 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
-                    <CardNumberElement options={ELEMENT_OPTIONS} />
-                </div>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 z-10">
+              <CreditCard size={20} />
             </div>
+            <div className="w-full pl-12 pr-4 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
+              <CardNumberElement options={ELEMENT_OPTIONS} />
+            </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <div className="px-5 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
-                    <CardExpiryElement options={ELEMENT_OPTIONS} />
-                </div>
-                <div className="px-5 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
-                    <CardCvcElement options={ELEMENT_OPTIONS} />
-                </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="px-5 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
+              <CardExpiryElement options={ELEMENT_OPTIONS} />
             </div>
+            <div className="px-5 py-4 rounded-[16px] border border-gray-200 focus-within:ring-2 focus-within:ring-[#4A7C59]/10 focus-within:border-[#4A7C59] transition-all bg-white">
+              <CardCvcElement options={ELEMENT_OPTIONS} />
+            </div>
+          </div>
         </div>
-        
+
         {error && (
           <div className="p-4 rounded-xl bg-red-50 text-red-600 text-[13px] font-medium border border-red-100">
             {error}
@@ -154,15 +152,19 @@ const PaymentModal = ({ isOpen, onClose, planName = "Hero Plan", price = "120", 
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { token } = useStoredAuth();
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && planId) {
       const fetchSecret = async () => {
         setLoading(true);
         try {
-          const res = await createPaymentIntent(price, "gbp");
-          if (res?.client_secret) setClientSecret(res.client_secret);
+          const res = await createPaymentIntent(planId, token);
+          if (res?.clientSecret) {
+            setClientSecret(res.clientSecret);
+          }
         } catch (err) {
-          console.error(err);
+          console.error("Failed to initialize payment:", err);
         } finally {
           setLoading(false);
         }
@@ -171,7 +173,7 @@ const PaymentModal = ({ isOpen, onClose, planName = "Hero Plan", price = "120", 
     } else {
       setClientSecret("");
     }
-  }, [isOpen, price]);
+  }, [isOpen, planId, token]);
 
   if (!isOpen) return null;
 
@@ -188,11 +190,11 @@ const PaymentModal = ({ isOpen, onClose, planName = "Hero Plan", price = "120", 
         >
           <div className="flex items-center justify-between px-8 py-7 border-b border-gray-50">
             <div>
-                <h2 className="text-[26px] font-bold text-[#1a1a1a] font-serif">Payment Checkout</h2>
-                <div className="flex items-center gap-1.5 opacity-40">
-                    <ShieldCheck size={14} />
-                    <span className="text-[11px] font-bold uppercase tracking-widest">Fully Secure</span>
-                </div>
+              <h2 className="text-[26px] font-bold text-[#1a1a1a] font-serif">Payment Checkout</h2>
+              <div className="flex items-center gap-1.5 opacity-40">
+                <ShieldCheck size={14} />
+                <span className="text-[11px] font-bold uppercase tracking-widest">Fully Secure</span>
+              </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-300">
               <X size={26} />
@@ -206,16 +208,17 @@ const PaymentModal = ({ isOpen, onClose, planName = "Hero Plan", price = "120", 
               </div>
             ) : clientSecret ? (
               <Elements stripe={stripePromise}>
-                <CheckoutForm 
-                  onClose={onClose} 
-                  planName={planName} 
-                  price={price} 
-                  planId={planId} 
+                <CheckoutForm
+                  onClose={onClose}
+                  planName={planName}
+                  price={price}
+                  planId={planId}
                   clientSecret={clientSecret}
+                  token={token}
                 />
               </Elements>
             ) : (
-                <div className="p-12 text-center text-red-500">Initialization failed.</div>
+              <div className="p-12 text-center text-red-500">Initialization failed.</div>
             )}
           </div>
         </motion.div>

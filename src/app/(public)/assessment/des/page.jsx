@@ -20,7 +20,7 @@ const desQuestions = [
 ];
 
 export default function DesPage() {
-    const { phq9Answers, gad7Answers, desAnswers, setDesAnswers } = useAssessment();
+    const { phq9Answers, gad7Answers, desAnswers, setDesAnswers, setAssessmentResults } = useAssessment();
     const router = useRouter();
     const { token } = useStoredAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,13 +37,17 @@ export default function DesPage() {
             const gad7Array = Array.from({ length: 7 }, (_, i) => gad7Answers[i] ?? 0);
             const desArray = Array.from({ length: 8 }, (_, i) => desAnswers[i] ?? 0);
 
-            await axios.post(`${baseUrl}/api/assessment/submit`, {
+            const response = await axios.post(`${baseUrl}/api/assessment/submit`, {
                 phq9Answers: phq9Array,
                 gad7Answers: gad7Array,
                 des11Answers: desArray
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
+            if (response.data.success) {
+                setAssessmentResults(response.data.data);
+            }
 
             router.push('/assessment/results');
         } catch (error) {
@@ -75,14 +79,19 @@ export default function DesPage() {
                     <div className="flex-1 text-center pb-4 text-sm font-semibold tracking-wide uppercase text-[#1e293b] relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[#1e293b]">DES-II</div>
                 </div>
 
-                <div className="flex border-l-4 border-[#7A7A7A] pl-6 py-2 mb-10 bg-gradient-to-r from-gray-50 to-transparent rounded-lg">
+                <div className="flex border-l-4 border-[#7A7A7A] pl-6 py-2 mb-10 bg-gradient-to-r from-gray-50 to-transparent rounded-lg justify-between items-center">
                     <div>
                         <h3 className="text-2xl font-serif text-[#1e293b] mb-2">Dissociative Experiences Scale (DES-II)</h3>
                         <div className="text-[#64748b] text-sm space-y-4">
                             <p>This questionnaire consists of experiences that you may have in your daily life. Please indicate what percentage of the time this happens to you (0% = never, 100% = always).</p>
-                            <p className="italic text-xs opacity-75">
-                                Reference: Carlson, E. B., & Putnam, F. W. (1993). An update on the Dissociative Experiences Scale. Dissociation: Progress in the Dissociative Disorders, 6(1), 16-27.
-                            </p>
+                        </div>
+                    </div>
+                    <div className="bg-[#1e293b] text-white px-4 py-2 rounded-lg text-center min-w-[80px]">
+                        <div className="text-[10px] uppercase font-bold opacity-70">Average Score</div>
+                        <div className="text-2xl font-serif">
+                            {desQuestions.length > 0 
+                                ? (Object.values(desAnswers).reduce((acc, val) => acc + val, 0) / desQuestions.length).toFixed(1)
+                                : 0}%
                         </div>
                     </div>
                 </div>
