@@ -76,7 +76,7 @@ const MeditationSpaceApp = () => {
             Back
           </button>
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/dashboard/EMDRCompanion")}
             className="px-10 py-4 bg-[#4A7C59] hover:bg-[#3d6649] text-white rounded-2xl font-serif text-xl tracking-wide transition-all shadow-xl shadow-[#4A7C59]/20 active:scale-95"
           >
             Save & Enter Space

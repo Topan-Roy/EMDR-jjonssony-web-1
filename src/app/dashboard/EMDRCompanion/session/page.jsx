@@ -388,22 +388,17 @@ export default function EMDRSession() {
               </div>
               <button
                 onClick={() => {
-                  if (journeyId && sessionId) {
-                    router.push(
-                      `/dashboard/sessions?journeyId=${encodeURIComponent(
-                        journeyId
-                      )}&title=${encodeURIComponent(
-                        journeyTitle
-                      )}&completeSessionId=${encodeURIComponent(sessionId)}`
-                    );
-                    return;
-                  }
-
-                  router.push("/dashboard/assessments");
+                  router.push(
+                    `/dashboard/EMDRCompanion/session/next?journeyId=${encodeURIComponent(
+                      journeyId
+                    )}&title=${encodeURIComponent(
+                      journeyTitle
+                    )}&sessionId=${encodeURIComponent(sessionId)}`
+                  );
                 }}
                 className="w-full mt-6 bg-[#4A7C59] hover:bg-[#3d6649] text-white py-3 rounded-xl font-medium transition-all shadow-lg active:scale-95"
               >
-                Complete Session
+                Next Step
               </button>
             </div>
           )}

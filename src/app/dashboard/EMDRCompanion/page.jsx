@@ -260,12 +260,12 @@ export default function EMDRCompanion() {
   const journeyTitle = searchParams.get("title") || "";
   const nextSessionRoute = useMemo(() => {
     if (!journeyId) {
-      return "/dashboard/EMDRCompanion/session/next/calm-space";
+      return "/dashboard/EMDRCompanion/session/session5";
     }
 
-    return `/dashboard/EMDRCompanion/session/next/calm-space?journeyId=${encodeURIComponent(
+    return `/dashboard/EMDRCompanion/session/session5?journeyId=${encodeURIComponent(
       journeyId
-    )}&title=${encodeURIComponent(journeyTitle)}&sessionId=3`;
+    )}&title=${encodeURIComponent(journeyTitle)}&sessionId=5`;
   }, [journeyId, journeyTitle]);
 
   const [messages, setMessages] = useState([
