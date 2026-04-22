@@ -86,7 +86,7 @@ const CheckoutForm = ({ onClose, planName, price, planId, clientSecret, token })
           <p className="text-[13px] text-gray-400 font-normal italic">Secure Checkout</p>
         </div>
         <div className="text-right">
-          <span className="text-[24px] font-bold text-[#4A7C59]">£{price}</span>
+          <span className="text-[24px] font-bold text-[#4A7C59]">{price}</span>
         </div>
       </div>
 

@@ -83,17 +83,17 @@ export default function DesPage() {
                     <div>
                         <h3 className="text-2xl font-serif text-[#1e293b] mb-2">Dissociative Experiences Scale (DES-II)</h3>
                         <div className="text-[#64748b] text-sm space-y-4">
-                            <p>This questionnaire consists of experiences that you may have in your daily life. Please indicate what percentage of the time this happens to you (0% = never, 100% = always).</p>
+                            <p className='text-[18px]'>This questionnaire consists of experiences that you may have in your daily life. We are interested in how often you have these experiences. It is important, however, that your answers show how often these experiences happen to you when you are NOT under the influence of alcohol or drugs.<br></br>  Please indicate what percentage of the time this happens to you (0% = never, 100% = always).  <br></br>    Reference: Carlson, E. B., & Putnam, F. W. (1993). An update on the Dissociative Experiences Scale. Dissociation: Progress in the Dissociative Disorders, 6(1), 16-27. </p>
                         </div>
                     </div>
-                    <div className="bg-[#1e293b] text-white px-4 py-2 rounded-lg text-center min-w-[80px]">
+                    {/* <div className="bg-[#1e293b] text-white px-4 py-2 rounded-lg text-center min-w-[80px]">
                         <div className="text-[10px] uppercase font-bold opacity-70">Average Score</div>
                         <div className="text-2xl font-serif">
-                            {desQuestions.length > 0 
+                            {desQuestions.length > 0
                                 ? (Object.values(desAnswers).reduce((acc, val) => acc + val, 0) / desQuestions.length).toFixed(1)
                                 : 0}%
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="space-y-6">
@@ -103,15 +103,27 @@ export default function DesPage() {
                             <div key={index} className="bg-[#FFF9F2] p-8 rounded-xl border border-[#F5EFE6]">
                                 <div className="text-xs text-[#94a3b8] font-medium mb-4">Question {index + 1} of {desQuestions.length}</div>
                                 <h4 className="text-xl text-[#334155] font-serif mb-10 leading-snug">{q}</h4>
-                                <div className="px-2">
+                                <div className="px-2 relative">
+                                    <div
+                                        className="absolute -top-10 transform -translate-x-1/2 transition-all duration-75 ease-out"
+                                        style={{ left: `${value}%` }}
+                                    >
+                                        <div className="bg-[#4A7C59] text-white text-xs font-bold px-2 py-1 rounded shadow-lg min-w-[38px] text-center mb-1">
+                                            {value}%
+                                        </div>
+                                        <div className="w-1.5 h-1.5 bg-[#4A7C59] rotate-45 mx-auto -mt-2"></div>
+                                    </div>
                                     <input
                                         type="range"
                                         min="0"
                                         max="100"
-                                        step="10"
+                                        step="1"
                                         value={value}
                                         onChange={(e) => handleChange(index, parseInt(e.target.value))}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#56825e]"
+                                        className="des-range-slider w-full h-2.5 rounded-full appearance-none cursor-pointer outline-none"
+                                        style={{
+                                            background: `linear-gradient(to right, #4A7C59 0%, #4A7C59 ${value}%, #e5e7eb ${value}%, #e5e7eb 100%)`
+                                        }}
                                     />
                                     <div className="flex justify-between mt-3 text-[10px] uppercase font-bold text-[#94a3b8] tracking-wider">
                                         <span>0% (Never)</span>
