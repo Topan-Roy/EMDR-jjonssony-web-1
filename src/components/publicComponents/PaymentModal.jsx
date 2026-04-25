@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 import { X, Loader2, ShieldCheck, CreditCard } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -40,6 +41,7 @@ const ELEMENT_OPTIONS = {
 const CheckoutForm = ({ onClose, planName, price, planId, clientSecret, token }) => {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
   const [subscribe] = useSubscribeMutation();
@@ -66,6 +68,7 @@ const CheckoutForm = ({ onClose, planName, price, planId, clientSecret, token })
         try {
           await confirmPayment(result.paymentIntent.id, token);
           toast.success("Payment Successful!");
+          router.push("/dashboard");
           onClose();
         } catch (backendError) {
           console.error("Backend Error:", backendError);

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
 import { useStoredAuth } from "@/redux/authStorage";
 
-const PricingSection = ({ compact = false }) => {
+const PricingSection = ({ compact = false, activePlanName }) => {
   const router = useRouter();
   const { isAuthenticated } = useStoredAuth();
   const [plans, setPlans] = useState([]);
@@ -21,20 +21,29 @@ const PricingSection = ({ compact = false }) => {
         const result = await response.json();
         if (result.success) {
           // Map API data to component structure
-          const mappedPlans = result.data.map((plan) => ({
-            id: plan._id,
-            name: plan.name,
-            price: plan.price === 0 ? "Free" : `${plan.currency}${plan.price}`,
-            duration:
-              plan.interval === "monthly" ? "/month" : `/${plan.interval}`,
-            subText: plan.tagline,
-            features: plan.features,
-            buttonText:
-              plan.name === "Free" ? "Apply for Access" : "Get Started",
-            hasSpots: plan.isCommunityAccess,
-            spots: 12, // Hardcoded as in original, could be from API if available
-            recommended: plan.name === "Prime Plan", // Keep original recommendation logic
-          }));
+          const mappedPlans = result.data.map((plan) => {
+            const normalizedActive = activePlanName?.trim()?.toLowerCase();
+            const normalizedPlan = plan.name?.trim()?.toLowerCase();
+            const isActive = normalizedActive && normalizedPlan && normalizedActive === normalizedPlan;
+            return {
+              id: plan._id,
+              name: plan.name,
+              price: plan.price === 0 ? "Free" : `${plan.currency}${plan.price}`,
+              duration:
+                plan.interval === "monthly" ? "/month" : `/${plan.interval}`,
+              subText: plan.tagline,
+              features: plan.features,
+              buttonText: isActive
+                ? "Active Plan"
+                : plan.name === "Free"
+                ? "Apply for Access"
+                : "Get Started",
+              hasSpots: plan.isCommunityAccess,
+              spots: 12, // Hardcoded as in original, could be from API if available
+              isActive: isActive,
+              recommended: plan.name === "Prime Plan", // Keep original recommendation logic
+            };
+          });
           setPlans(mappedPlans);
         }
       } catch (error) {
@@ -45,7 +54,7 @@ const PricingSection = ({ compact = false }) => {
     };
 
     fetchPlans();
-  }, []);
+  }, [activePlanName]);
 
   if (loading) {
     return (
@@ -64,14 +73,20 @@ const PricingSection = ({ compact = false }) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: index * 0.1 }}
-          className={`relative bg-white rounded-[20px] p-6 flex flex-col transition-all duration-300 w-full ${plan.recommended
+          className={`relative bg-white rounded-[20px] p-6 flex flex-col transition-all duration-300 w-full ${plan.isActive || (!activePlanName && plan.recommended)
               ? "border-[2.5px] border-[#4A7C59] scale-105 z-10 shadow-xl"
               : "border border-gray-200 shadow-sm"
             }`}
         >
-          {plan.recommended && (
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FDC700] rounded-2xl   px-4 py-0.5 z-20">
-              <span className="text-[14px] text-[#101828] font-semibold  tracking-widest ">
+          {plan.isActive ? (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#4A7C59] rounded-2xl px-4 py-0.5 z-20">
+              <span className="text-[14px] text-white font-semibold tracking-widest">
+                Current Plan
+              </span>
+            </div>
+          ) : plan.recommended && !activePlanName && (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#FDC700] rounded-2xl px-4 py-0.5 z-20">
+              <span className="text-[14px] text-[#101828] font-semibold tracking-widest">
                 Recommended
               </span>
             </div>
@@ -124,6 +139,7 @@ const PricingSection = ({ compact = false }) => {
 
           <div className="mt-auto">
             <button
+              disabled={plan.isActive}
               onClick={() => {
                 // Save selected plan details
                 localStorage.setItem("selectedPlan", JSON.stringify({
@@ -134,10 +150,13 @@ const PricingSection = ({ compact = false }) => {
                 // Force redirection to login page with a return path to consent
                 router.push("/authentication/login?redirect=/consent");
               }}
-              className={`w-full py-2.5 rounded-lg text-[16px] font-medium border-[1.5px] border-[#4A7C59] transition-all  ${plan.recommended
-                ? "bg-white border-[#4A7C59] text-[#4A7C59] hover:bg-[#456b4c] hover:text-white"
-                : "bg-white border-gray-300 text-gray-700 hover:border-[#4A7C59] hover:text-[#4A7C59]"
-                }`}
+              className={`w-full py-2.5 rounded-lg text-[16px] font-medium border-[1.5px] transition-all ${
+                plan.isActive
+                  ? "bg-[#4A7C59] border-[#4A7C59] text-white opacity-80 cursor-not-allowed"
+                  : plan.recommended && !activePlanName
+                  ? "bg-white border-[#4A7C59] text-[#4A7C59] hover:bg-[#456b4c] hover:text-white"
+                  : "bg-white border-gray-300 text-gray-700 hover:border-[#4A7C59] hover:text-[#4A7C59]"
+              }`}
             >
               {plan.buttonText}
             </button>

@@ -435,8 +435,8 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="mt-8 grid grid-cols-2 gap-4 border-t border-stone-50 pt-8 font-sans">
-                <div className="text-left">
+              <div className=" grid grid-cols-2 gap-4 border-t border-stone-50 pt-8 font-sans">
+                {/* <div className="text-left">
                   <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-stone-400">
                     Member Since
                   </p>
@@ -450,6 +450,14 @@ export default function ProfilePage() {
                   </p>
                   <p className="text-sm font-bold tracking-tight text-[#5a7c5a]">
                     {getCompletionLabel(profile)}
+                  </p>
+                </div> */}
+                <div className="col-span-2 mt-2 rounded-[24px] bg-[#5a7c5a]/5 py-4 text-center">
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-stone-400">
+                    Subscription Plan
+                  </p>
+                  <p className="text-base font-bold tracking-tight text-[#5a7c5a]">
+                    {profile?.SubscriptionPlan || "No Active Plan"}
                   </p>
                 </div>
               </div>
@@ -755,7 +763,7 @@ export default function ProfilePage() {
           </div>
         ) : null}
 
-        <PricingSection compact={true} />
+        <PricingSection compact={true} activePlanName={profile?.SubscriptionPlan} />
       </div>
     </div>
   );
