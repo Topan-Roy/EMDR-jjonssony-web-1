@@ -19,19 +19,34 @@ export const getBilateralEnvironments = async (token) => {
     throw new Error("Please sign in again to load visual environments.");
   }
 
-  const response = await fetch(`${baseUrl}/api/media?page=1&limit=20`, {
-    cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const result = await response.json();
+  const allMedia = [];
+  let currentPage = 1;
+  let hasMore = true;
 
-  if (!response.ok || !result?.success) {
-    throw new Error("Failed to fetch bilateral environments.");
+  while (hasMore) {
+    const response = await fetch(`${baseUrl}/api/media?page=${currentPage}`, {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const result = await response.json();
+
+    if (!response.ok || !result?.success) {
+      throw new Error("Failed to fetch bilateral environments.");
+    }
+
+    const pageMedia = result?.data?.media || [];
+    allMedia.push(...pageMedia);
+
+    const totalPages = Number(result?.data?.pagination?.totalPages || 0);
+    const hasNextPage = Boolean(result?.data?.pagination?.hasNextPage);
+    hasMore = totalPages > 0 ? currentPage < totalPages : hasNextPage;
+
+    currentPage += 1;
   }
 
-  return (result?.data?.media || [])
+  return allMedia
     .filter(
       (item) =>
         item?.mediaType === "image" &&

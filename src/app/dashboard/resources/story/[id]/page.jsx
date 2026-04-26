@@ -105,8 +105,8 @@ export default function CalmPlaceDetailPage() {
   }, [calmPlaceId, hasHydrated, token]);
 
   return (
-    <div className="min-h-screen rounded-2xl bg-[#ece6d8]/60 p-2">
-      <section className="relative overflow-hidden rounded-2xl border border-white/50 bg-[#efe9dc] shadow-[0_20px_50px_rgba(31,41,55,0.18)]">
+    <div className=" rounded-2xl bg-[#ece6d8]/60 p-4">
+      <section className="relative overflow-hidden rounded-2xl border border-white/50 bg-[#efe9dc] shadow-[0_20px_50px_rgba(31,41,55,0.18)] p-3">
         {isLoading ? (
           <div className="flex min-h-[70vh] items-center justify-center px-6 text-center text-stone-700">
             Loading calm place...
