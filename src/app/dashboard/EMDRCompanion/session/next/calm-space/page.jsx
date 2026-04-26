@@ -8,7 +8,6 @@ import MoodSetter from "@/components/dashboard/EMDRCompanion/CalmSpace/MoodSette
 import PreviewPane from "@/components/dashboard/EMDRCompanion/CalmSpace/PreviewPane";
 
 const VISUAL_CATEGORY_NAME = "visual-image";
-const FALLBACK_IMAGE_EXTENSION = "jpg";
 const FALLBACK_SOUND_EXTENSION = "mp3";
 
 const getBaseUrl = () => {
@@ -16,6 +15,48 @@ const getBaseUrl = () => {
     process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
 
   return rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+};
+
+const inferMimeTypeFromName = (value, fallbackType = "") => {
+  const normalizedValue = (value || "").trim().toLowerCase();
+
+  if (normalizedValue.endsWith(".mp3")) {
+    return "audio/mpeg";
+  }
+
+  if (normalizedValue.endsWith(".wav")) {
+    return "audio/wav";
+  }
+
+  if (normalizedValue.endsWith(".m4a")) {
+    return "audio/mp4";
+  }
+
+  if (normalizedValue.endsWith(".aac")) {
+    return "audio/aac";
+  }
+
+  if (normalizedValue.endsWith(".ogg")) {
+    return "audio/ogg";
+  }
+
+  if (normalizedValue.endsWith(".jpg") || normalizedValue.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+
+  if (normalizedValue.endsWith(".png")) {
+    return "image/png";
+  }
+
+  if (normalizedValue.endsWith(".gif")) {
+    return "image/gif";
+  }
+
+  if (normalizedValue.endsWith(".webp")) {
+    return "image/webp";
+  }
+
+  return fallbackType;
 };
 
 const sanitizeFileName = (value, fallbackName) => {
@@ -32,12 +73,7 @@ const sanitizeFileName = (value, fallbackName) => {
   return source.replace(/[^\w.-]+/g, "_");
 };
 
-const ensureFileFromSelection = async ({
-  selectedItem,
-  fallbackExtension,
-  fallbackPrefix,
-  label,
-}) => {
+const getSelectionValue = ({ selectedItem, label }) => {
   if (!selectedItem) {
     throw new Error(`Please select a ${label}.`);
   }
@@ -46,17 +82,35 @@ const ensureFileFromSelection = async ({
     return selectedItem.file;
   }
 
-  const remoteUrl = selectedItem.url || selectedItem.image;
+  const remoteUrl = selectedItem.url || selectedItem.image || "";
 
   if (!remoteUrl) {
     throw new Error(`The selected ${label} is missing a file URL.`);
+  }
+
+  return remoteUrl;
+};
+
+const getSoundUploadValue = async (selectedSound) => {
+  if (!selectedSound) {
+    throw new Error("Please select a sound.");
+  }
+
+  if (selectedSound.file instanceof File) {
+    return selectedSound.file;
+  }
+
+  const remoteUrl = selectedSound.url || "";
+
+  if (!remoteUrl) {
+    throw new Error("The selected sound is missing a file URL.");
   }
 
   const response = await fetch(remoteUrl);
 
   if (!response.ok) {
     throw new Error(
-      `Unable to prepare the selected ${label} for upload. Please try a manual upload.`,
+      "Unable to prepare the selected sound for upload. Please try another sound.",
     );
   }
 
@@ -64,16 +118,17 @@ const ensureFileFromSelection = async ({
   const blobExtension =
     blob.type?.split("/")?.[1]?.split(";")?.[0]?.trim() || "";
   const rawName = sanitizeFileName(
-    selectedItem.fileName || selectedItem.alt || selectedItem.title || remoteUrl,
-    `${fallbackPrefix}.${fallbackExtension}`,
+    selectedSound.fileName || selectedSound.title || remoteUrl,
+    `calm-space-sound.${FALLBACK_SOUND_EXTENSION}`,
   );
   const hasExtension = /\.[a-z0-9]+$/i.test(rawName);
   const fileName = hasExtension
     ? rawName
-    : `${rawName}.${blobExtension || fallbackExtension}`;
+    : `${rawName}.${blobExtension || FALLBACK_SOUND_EXTENSION}`;
+  const normalizedMimeType = inferMimeTypeFromName(fileName, blob.type || "");
 
   return new File([blob], fileName, {
-    type: blob.type || undefined,
+    type: normalizedMimeType || undefined,
   });
 };
 
@@ -128,21 +183,14 @@ const createCalmSpacePayload = async ({
   payload.append("describe", description.trim());
   payload.append(
     "image",
-    await ensureFileFromSelection({
+    getSelectionValue({
       selectedItem: selectedVisual,
-      fallbackExtension: FALLBACK_IMAGE_EXTENSION,
-      fallbackPrefix: "calm-space-image",
       label: "image",
     }),
   );
   payload.append(
     "sound",
-    await ensureFileFromSelection({
-      selectedItem: selectedSound,
-      fallbackExtension: FALLBACK_SOUND_EXTENSION,
-      fallbackPrefix: "calm-space-sound",
-      label: "sound",
-    }),
+    await getSoundUploadValue(selectedSound),
   );
 
   return payload;
@@ -333,6 +381,12 @@ const MeditationSpaceApp = () => {
 
       if (!response.ok || !result?.success) {
         throw new Error(result?.message || "Failed to save your calm space.");
+      }
+
+      if (!result?.data?.soundLink) {
+        throw new Error(
+          "The sound file was not saved. Please try again or choose a smaller MP3/WAV file.",
+        );
       }
 
       router.push("/dashboard/EMDRCompanion");
