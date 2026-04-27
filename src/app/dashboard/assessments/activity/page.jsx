@@ -37,9 +37,9 @@ export default function RecentActivityPage() {
   ];
 
   return (
-    <div className="bg-[#9a9898] backdrop-blur-xl rounded-3xl shadow-2xl p-8 lg:p-12 border border-white/20 min-h-screen">
+    <div className="bg-[#ffffff]/50  rounded-3xl shadow-2xl p-8 lg:p-12 border border-white/20 min-h-screen">
       <div className="flex items-center gap-4 mb-10">
-        <h1 className="text-4xl font-serif text-white">Recent Activity</h1>
+        <h1 className="text-4xl font-serif text-block">Recent Activity</h1>
       </div>
 
       <div className="space-y-4">

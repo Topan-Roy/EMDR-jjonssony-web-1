@@ -39,19 +39,33 @@ export default function CreateJourney() {
         setIsLoadingImages(true);
         setImageError("");
 
-        const response = await fetch(`${baseUrl}/api/media?page=1&limit=20`, {
-          cache: "no-store",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const result = await response.json();
+        const allMedia = [];
+        let currentPage = 1;
+        let hasMore = true;
 
-        if (!response.ok || !result?.success) {
-          throw new Error("Failed to fetch journey images.");
+        while (hasMore) {
+          const response = await fetch(`${baseUrl}/api/media?page=${currentPage}`, {
+            cache: "no-store",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const result = await response.json();
+
+          if (!response.ok || !result?.success) {
+            throw new Error("Failed to fetch journey images.");
+          }
+
+          const pageMedia = result?.data?.media || [];
+          allMedia.push(...pageMedia);
+
+          const totalPages = Number(result?.data?.pagination?.totalPages || 0);
+          const hasNextPage = Boolean(result?.data?.pagination?.hasNextPage);
+          hasMore = totalPages > 0 ? currentPage < totalPages : hasNextPage;
+          currentPage += 1;
         }
 
-        const filteredImages = (result?.data?.media || [])
+        const filteredImages = allMedia
           .filter(
             (item) =>
               item?.mediaType === "image" &&
@@ -139,7 +153,7 @@ export default function CreateJourney() {
   return (
     <div className="flex items-center justify-center">
       <div className="w-full">
-        <div className="bg-[#9a9898] backdrop-blur-xl rounded-3xl shadow-2xl p-5 lg:p-10 border border-white/20">
+        <div className="bg-[#ffffff]/50  rounded-3xl shadow-2xl p-5 lg:p-10 border border-white/20">
           <div className="text-center">
             <h1 className="text-4xl font-serif text-[#0F1912] ">
               Create Your Journey
