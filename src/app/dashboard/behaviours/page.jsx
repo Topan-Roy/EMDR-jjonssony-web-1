@@ -801,31 +801,35 @@ export default function BehavioursPage() {
   };
 
   return (
-    <div className="relative min-h-screen  text-[#1a1a1a] ">
+    <div className="relative min-h-screen bg-[#FBFBFC]/30 text-[#1a1a1a]">
+      {/* Project-Themed Aura Background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-12 top-10 h-44 w-44 rounded-full bg-white/25 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-[#4A7C59]/15 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-[#DBE5DE]/35 blur-3xl" />
+        <div className="absolute -left-20 top-0 h-[500px] w-[500px] rounded-full bg-[#4A7C59]/10 blur-[120px]" />
+        <div className="absolute -right-20 top-20 h-[600px] w-[600px] rounded-full bg-[#DBE5DE]/40 blur-[140px]" />
+        <div className="absolute bottom-0 left-1/4 h-96 w-96 rounded-full bg-[#4A7C59]/5 blur-[100px]" />
       </div>
-      <div className="relative mx-auto flex min-h-[700px] w-full  flex-col overflow-hidden rounded-[32px] border border-white/45 bg-white/15 shadow-[0_30px_80px_rgba(15,25,18,0.12)] backdrop-blur-md">
-        <div className="border-b border-white/40 bg-white/38 px-6 py-8 text-center backdrop-blur-md sm:px-8">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#6E756E]">
+
+      <div className="relative mx-auto flex min-h-[700px] w-full flex-col overflow-hidden rounded-[32px] border border-white/50 bg-[#FBFBFC]/15 shadow-[0_30px_80px_rgba(15,25,18,0.08)] backdrop-blur-xl">
+        {/* Project Branded Header */}
+        <div className="border-b border-white/40 bg-[#4A7C59]/5 px-6 py-8 text-center backdrop-blur-md sm:px-8">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#4A7C59]/70">
             The UK Inkind Psychology Clinic
           </div>
-          <h1 className="mb-2 text-2xl font-light tracking-[-0.03em] text-[#0F1912] sm:text-[30px]">
+          <h1 className="mb-2 font-serif text-2xl font-light tracking-[-0.03em] text-[#0F1912] sm:text-[32px]">
             Weekly Progress Review
           </h1>
           <p className="text-sm font-light leading-6 text-[#4E5A51]">
             Continuing your behavioral exposure journey
           </p>
-          <span className="mt-3 inline-block rounded-full bg-[#4A7C59] px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-white shadow-sm">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#4A7C59] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-white shadow-lg shadow-[#4A7C59]/20">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
             Week {currentWeek}
-          </span>
+          </div>
         </div>
 
         <div
           ref={chatContainerRef}
-          className="chat-container flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.12)_0%,rgba(247,249,247,0.34)_100%)] px-6 py-8 sm:px-8"
+          className="chat-container flex-1 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.05)_0%,rgba(219,229,222,0.1)_100%)] px-6 py-8 sm:px-8"
         >
           {messages.map((message) => (
             <div key={message.id} className="message">

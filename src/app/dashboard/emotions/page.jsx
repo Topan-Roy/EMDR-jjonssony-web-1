@@ -95,7 +95,7 @@ export default function EmotionsLanding() {
   return (
     <div className="  p-4">
       {/* Container Frame */}
-      <div className=" bg-white/20 backdrop-blur-md rounded-[40px] border border-white/50 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.05)] p-2">
+      <div className=" bg-white/20 backdrop-blur-md rounded-[40px] border border-white/50  p-2">
         {/* Centered Title */}
         <div className="py-10 text-center">
           <h1 className="text-[28px] text-[#000000]">Emotions</h1>

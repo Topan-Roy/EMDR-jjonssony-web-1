@@ -120,8 +120,8 @@ export default function StoryPage() {
   }, [hasHydrated, token]);
 
   return (
-    <div className="min-h-screen rounded-2xl bg-[#ede7dc]/50 p-1">
-      <section className="relative overflow-hidden rounded-2xl border border-[#cfd4ca] bg-[#e7e1d3]/70 p-4 shadow-[0_18px_45px_rgba(41,37,36,0.14)] md:p-6">
+    <div className="min-h-screen rounded-2xl bg-white/50 p-1">
+      <section className="relative overflow-hidden rounded-2xl border border-[#cfd4ca] bg-white/70 p-4 shadow-[0_18px_45px_rgba(41,37,36,0.14)] md:p-6">
         <div className="absolute inset-0 bg-gradient-to-b from-[#d9d3c2]/35 via-transparent to-[#e7e0d2]/20" />
         <div className="relative z-10">
           <h1 className="font-serif text-2xl text-[#2f3027] md:text-3xl">
