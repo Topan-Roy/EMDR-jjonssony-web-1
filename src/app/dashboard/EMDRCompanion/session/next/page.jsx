@@ -4,6 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStoredAuth } from "@/redux/authStorage";
+import {
+  buildCbtFormulationNodes,
+  buildAnswersFromCbtFormulationEntry,
+  flattenCbtFormulationNodes,
+} from "@/utils/cbtFormulationConfig";
 
 const getBaseUrl = () => {
   const rawBaseUrl =
@@ -52,6 +57,63 @@ const postCbtFormulation = async ({ baseUrl, token, payload }) => {
   return result;
 };
 
+const fetchCbtFormulations = async ({ baseUrl, token }) => {
+  const response = await fetch(`${baseUrl}/api/cbt-formulation`, {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const result = await response.json();
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || "Failed to fetch CBT formulations.");
+  }
+
+  return (result?.data || [])
+    .slice()
+    .sort(
+      (firstItem, secondItem) =>
+        new Date(secondItem?.createdAt || 0).getTime() -
+        new Date(firstItem?.createdAt || 0).getTime(),
+    );
+};
+
+const patchCbtFormulation = async ({ baseUrl, token, formulationId, payload }) => {
+  const response = await fetch(
+    `${baseUrl}/api/cbt-formulation/${formulationId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+  const result = await response.json();
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || "Failed to update CBT formulation.");
+  }
+
+  return result;
+};
+
+const buildEditableAnswers = (entry) => {
+  const savedAnswers = buildAnswersFromCbtFormulationEntry(entry);
+
+  return Object.fromEntries(
+    Object.entries(savedAnswers).map(([key, value]) => [
+      key,
+      {
+        ...value,
+        completed: false,
+      },
+    ]),
+  );
+};
+
 export default function CBTFormulation() {
   const router = useRouter();
   const { token, hasHydrated } = useStoredAuth();
@@ -74,155 +136,19 @@ export default function CBTFormulation() {
   const [optionsError, setOptionsError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [currentFormulationId, setCurrentFormulationId] = useState(null);
 
   const baseUrl = getBaseUrl();
 
-  const formulationNodes = {
-    timeline: [
-      {
-        id: "beginning",
-        section: "The Beginning",
-        title: "When I Was Little",
-        subtitle: "Early memories & experiences",
-        modalContent: {
-          title: "When I was little (Childhood)",
-          description:
-            "This may or may not be relevant to what you would like to work on so skip it if not.",
-          question:
-            "Float back in time and see if you remember feeling this way (from your situation) as a child or any other time?",
-          bullets: [
-            "Were there specific events or patterns in your family?",
-            "What messages did you receive about yourself growing up?",
-          ],
-          example:
-            '"My parents were very critical" or "I had to be perfect to get attention" or "I learned to stay quiet to avoid conflict"',
-          type: "textarea",
-        },
-      },
-      {
-        id: "learned",
-        section: "What I Learned",
-        title: "Deep-Down Beliefs",
-        subtitle: "What I believe about myself",
-        modalContent: {
-          title: "Deep-Down Beliefs",
-          description:
-            "These are deep beliefs about yourself that might have been activated or try to think carefully about these and see if they match the current situation you chose.",
-          question: "Choose any beliefs that fit for you:",
-          type: "checkbox",
-          options: cbtOptions.negativeBeliefs,
-        },
-      },
-      {
-        id: "rules",
-        section: "My Survival Guide",
-        title: "The Rules",
-        subtitle: "How I must be to feel safe",
-        modalContent: {
-          title: "The Rules",
-          description:
-            "These are the rules or assumptions you live by to try and keep yourself safe.",
-          question: "What rules do you follow to protect yourself?",
-          bullets: [
-            "If I... then I'll be safe/loved/accepted",
-            "I must always...",
-            "I should never...",
-          ],
-          example: '"I must be perfect" or "I should never show weakness"',
-          type: "textarea",
-        },
-      },
-      {
-        id: "trigger",
-        section: "Life Happens",
-        title: "The Trigger",
-        subtitle: "What happened recently",
-        modalContent: {
-          title: "Life Happens (The Trigger)",
-          description:
-            "This is the recent situation or event that activated your beliefs and rules.",
-          question: "What happened that brought up these feelings?",
-          bullets: ["Describe the situation", "When did it happen?"],
-          example: `"My boss criticized my work" or "My friend didn't respond"`,
-          type: "textarea",
-        },
-      },
-    ],
-    react: [
-      {
-        id: "thoughts",
-        title: "Thoughts",
-        subtitle: "In my head",
-        modalContent: {
-          title: "Thoughts (In my head)",
-          description: "What thoughts go through your mind?",
-          question: "What do you think when this happens?",
-          example: `"I'm going to fail" or "Nobody likes me"`,
-          type: "textarea",
-        },
-      },
-      {
-        id: "feelings",
-        title: "Feelings",
-        subtitle: "In my body",
-        modalContent: {
-          title: "Feelings (In my body)",
-          description:
-            "What emotions and physical sensations do you experience?",
-          question: "Choose the feelings that fit for you:",
-          type: "checkbox",
-          options: cbtOptions.emotions,
-        },
-      },
-      {
-        id: "behaviors",
-        title: "Behaviors",
-        subtitle: "What I did",
-        modalContent: {
-          title: "Behaviors (What I did)",
-          description: "What actions did you take?",
-          question: "What did you do in response?",
-          example: '"Avoided the situation" or "Lashed out at someone"',
-          type: "textarea",
-        },
-      },
-      {
-        id: "consequences",
-        title: "The Consequences",
-        subtitle: "Results of my actions",
-        modalContent: {
-          title: "The Consequences",
-          description:
-            "These are the impacts or patterns that may follow from your reactions.",
-          question: "Choose any consequences that fit for you:",
-          type: "checkbox",
-          options: cbtOptions.consequenceOptions,
-          allowOther: true,
-          otherLabel: "Anything else you've noticed?",
-          otherPlaceholder: "Write any other consequence here...",
-        },
-      },
-      {
-        id: "superpowers",
-        title: "Your Superpowers",
-        subtitle: "Strengths & Resilience",
-        modalContent: {
-          title: "Your Superpowers",
-          description:
-            "What strengths did you use or can you use in this situation?",
-          question: "What makes you resilient?",
-          example: '"I am self-aware" or "I am brave enough to seek help"',
-          type: "textarea",
-        },
-      },
-    ],
-  };
+  const formulationNodes = buildCbtFormulationNodes(cbtOptions);
 
   const timelineNodes = formulationNodes.timeline;
   const reactNodes = formulationNodes.react;
 
   const getNodeById = (nodeId) =>
-    [...timelineNodes, ...reactNodes].find((node) => node.id === nodeId);
+    flattenCbtFormulationNodes(formulationNodes).find(
+      (node) => node.id === nodeId,
+    );
 
   const getCurrentNodeIndex = () =>
     timelineNodes.findIndex((node) => !answers[node.id]?.completed);
@@ -230,7 +156,9 @@ export default function CBTFormulation() {
   const allTimelineComplete = timelineNodes.every(
     (node) => answers[node.id]?.completed,
   );
-  const allReactComplete = reactNodes.every((node) => answers[node.id]?.completed);
+  const allReactComplete = reactNodes.every(
+    (node) => answers[node.id]?.completed,
+  );
   const allCompleted = allTimelineComplete && allReactComplete;
   const currentNodeIndex = getCurrentNodeIndex();
   const showReactSection = allTimelineComplete;
@@ -274,6 +202,35 @@ export default function CBTFormulation() {
     };
 
     loadOptions();
+  }, [baseUrl, hasHydrated, token]);
+
+  useEffect(() => {
+    if (!hasHydrated || !baseUrl || !token) {
+      return;
+    }
+
+    const loadExistingFormulation = async () => {
+      try {
+        const formulations = await fetchCbtFormulations({
+          baseUrl,
+          token,
+        });
+        const latestFormulation = formulations[0];
+
+        if (!latestFormulation) {
+          setCurrentFormulationId(null);
+          setAnswers({});
+          return;
+        }
+
+        setCurrentFormulationId(latestFormulation._id || null);
+        setAnswers(buildEditableAnswers(latestFormulation));
+      } catch (error) {
+        console.error("Error loading existing CBT formulation:", error);
+      }
+    };
+
+    loadExistingFormulation();
   }, [baseUrl, hasHydrated, token]);
 
   useEffect(() => {
@@ -366,7 +323,27 @@ export default function CBTFormulation() {
   };
 
   const handleSkip = () => {
+    const skippedNodeId = activeModal;
+
+    setAnswers((prev) => ({
+      ...prev,
+      [skippedNodeId]: { ...prev[skippedNodeId], completed: true },
+    }));
+
     resetModalState();
+
+    if (skippedNodeId === "trigger") {
+      return;
+    }
+
+    window.setTimeout(() => {
+      if (currentNodeRef.current) {
+        currentNodeRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
   };
 
   const toggleBelief = (belief) => {
@@ -406,11 +383,13 @@ export default function CBTFormulation() {
       setIsSubmitting(true);
       setSubmitError("");
 
-      await postCbtFormulation({
+      const result = await postCbtFormulation({
         baseUrl,
         token,
         payload,
       });
+
+      setCurrentFormulationId(result?.data?._id || currentFormulationId);
 
       router.push("/dashboard/EMDRCompanion/session/next/calm-space");
     } catch (error) {
@@ -425,13 +404,14 @@ export default function CBTFormulation() {
 
   const activeNode = getNodeById(activeModal);
   const activeContent = activeNode?.modalContent;
-  const isSaveDisabled = activeContent?.type === "textarea"
-    ? !currentAnswer.trim()
-    : selectedBeliefs.length === 0;
+  const isSaveDisabled =
+    activeContent?.type === "textarea"
+      ? !currentAnswer.trim()
+      : selectedBeliefs.length === 0;
 
   return (
-    <div className="min-h-screen bg-white/40">
-      <div className="relative z-10 min-h-screen overflow-y-auto rounded-2xl bg-white/40">
+    <div className="min-h-screen bg-white/40 rounded-2xl">
+      <div className="relative z-10 min-h-screen overflow-y-auto rounded-2xl ">
         <div className="sticky top-0 z-20 px-8 pb-4 pt-8 backdrop-blur-sm">
           <h1 className="text-2xl font-serif text-stone-900">
             My CBT Formulation
@@ -610,7 +590,11 @@ export default function CBTFormulation() {
                         initial={{ opacity: 0, x: -12, y: 10 }}
                         animate={{ opacity: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, x: -12, y: 10 }}
-                        transition={{ duration: 0.75, delay: 0.4, ease: "easeOut" }}
+                        transition={{
+                          duration: 0.75,
+                          delay: 0.4,
+                          ease: "easeOut",
+                        }}
                         className="w-full max-w-[280px]"
                       >
                         <button
@@ -639,7 +623,11 @@ export default function CBTFormulation() {
                         initial={{ opacity: 0, x: 12, y: 10 }}
                         animate={{ opacity: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, x: 12, y: 10 }}
-                        transition={{ duration: 0.75, delay: 0.4, ease: "easeOut" }}
+                        transition={{
+                          duration: 0.75,
+                          delay: 0.4,
+                          ease: "easeOut",
+                        }}
                         className="w-full max-w-[280px]"
                       >
                         <button
@@ -679,11 +667,10 @@ export default function CBTFormulation() {
                       className="relative w-full transition-all duration-300 hover:scale-[1.05]"
                     >
                       <div
-                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${
-                          answers.consequences?.completed
-                            ? "bg-[#f4f4f4]"
-                            : "bg-white"
-                        }`}
+                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${answers.consequences?.completed
+                          ? "bg-[#f4f4f4]"
+                          : "bg-white"
+                          }`}
                       >
                         <h3 className="mb-4 text-4xl font-serif text-[#0F1912]">
                           The Consequences
@@ -714,11 +701,10 @@ export default function CBTFormulation() {
                       className="relative w-full transition-all duration-300 hover:scale-[1.05]"
                     >
                       <div
-                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${
-                          answers.superpowers?.completed
-                            ? "bg-[#f5f5f2]"
-                            : "bg-white/90 backdrop-blur-md"
-                        }`}
+                        className={`rounded-3xl border-4 border-[#4A7C59] p-5 text-center shadow-2xl transition-all duration-500 ${answers.superpowers?.completed
+                          ? "bg-[#f5f5f2]"
+                          : "bg-white/90 backdrop-blur-md"
+                          }`}
                       >
                         <h3 className="mb-4 text-4xl font-serif text-[#0F1912]">
                           Your Superpowers
@@ -860,7 +846,9 @@ export default function CBTFormulation() {
                           </label>
                           <textarea
                             value={otherAnswer}
-                            onChange={(event) => setOtherAnswer(event.target.value)}
+                            onChange={(event) =>
+                              setOtherAnswer(event.target.value)
+                            }
                             placeholder={activeContent.otherPlaceholder}
                             className="h-24 w-full resize-none rounded-lg border border-stone-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A7C59]"
                           />

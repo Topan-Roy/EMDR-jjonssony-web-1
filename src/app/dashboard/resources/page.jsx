@@ -127,13 +127,13 @@ export default function MyResources() {
               My Story
             </h3>
             <p className="text-[#7A7A7A] text-sm leading-relaxed mb-4">
-              Access your saved safe place audio visualization.
+              Review your saved CBT formulation reflections.
             </p>
             <Link
-              href="/dashboard/EMDRCompanion/session/next"
+              href="/dashboard/resources/my-story"
               className="text-[#4A7C59] text-sm font-medium hover:underline"
             >
-              Listen Now
+              View Story
             </Link>
           </div>
         </div>
