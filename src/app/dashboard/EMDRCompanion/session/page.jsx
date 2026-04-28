@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useStoredAuth } from "@/redux/authStorage";
 
 const FIXED_SESSION_VIDEO_ID = "69e7c604fd68f032aa7a2c61";
+const FIXED_SESSION_VIDEO_CATEGORY = "session-1";
 
 const patchMediaProgress = async ({
   baseUrl,
@@ -118,7 +119,7 @@ export default function EMDRSession() {
         setIsLoadingVideo(true);
         setVideoError("");
 
-        const response = await fetch(`${baseUrl}/api/media?page=1&limit=20`, {
+        const response = await fetch(`${baseUrl}/api/media?page=1&limit=100`, {
           cache: "no-store",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,11 +136,14 @@ export default function EMDRSession() {
             item?._id === FIXED_SESSION_VIDEO_ID &&
             item?.mediaType === "video" &&
             item?.status === "active" &&
-            item?.categoryId?.categoryName?.trim()?.toLowerCase() === "videos"
+            item?.categoryId?.categoryName?.trim()?.toLowerCase() ===
+              FIXED_SESSION_VIDEO_CATEGORY
         );
 
         if (!sessionVideo?.url) {
-          throw new Error("The fixed session video was not found in the Videos category.");
+          throw new Error(
+            "The fixed session video was not found in the session-1 category."
+          );
         }
 
         setVideoSrc(sessionVideo.url);

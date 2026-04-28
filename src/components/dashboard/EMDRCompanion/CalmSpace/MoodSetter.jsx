@@ -4,7 +4,6 @@ import AudioPlayer from "./AudioPlayer";
 import MoodSelector from "./MoodSelector";
 
 const MOOD_SOUND_CATEGORY_NAME = "visual-sounds";
-const MEDIA_PAGE_SIZE = 20;
 
 const getMoodSounds = async (token) => {
   const rawBaseUrl =
@@ -21,67 +20,60 @@ const getMoodSounds = async (token) => {
     throw new Error("Please sign in again to load sounds.");
   }
 
-  const allMedia = [];
-  let currentPage = 1;
-  let hasMore = true;
+  const categoriesResponse = await fetch(`${baseUrl}/api/categories`, {
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const categoriesResult = await categoriesResponse.json();
 
-  while (hasMore) {
-    const response = await fetch(
-      `${baseUrl}/api/media?page=${currentPage}&limit=${MEDIA_PAGE_SIZE}`,
-      {
-        cache: "no-store",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+  if (!categoriesResponse.ok || !categoriesResult?.success) {
+    throw new Error(
+      categoriesResult?.message || "Failed to fetch sound categories."
     );
-    const result = await response.json();
-
-    if (!response.ok || !result?.success) {
-      throw new Error(result?.message || "Failed to fetch mood sounds.");
-    }
-
-    const pageMedia = result?.data?.media || [];
-    allMedia.push(...pageMedia);
-
-    const totalPages = Number(result?.data?.pagination?.totalPages || 0);
-    const hasNextPageFromMeta =
-      totalPages > 0 ? currentPage < totalPages : null;
-
-    if (hasNextPageFromMeta === null) {
-      hasMore = pageMedia.length === MEDIA_PAGE_SIZE;
-    } else {
-      hasMore = hasNextPageFromMeta;
-    }
-
-    currentPage += 1;
   }
 
-  return allMedia
-    .filter(
-      (item) => {
-        const normalizedCategoryName =
-          item?.categoryId?.categoryName?.trim()?.toLowerCase() || "";
-        const normalizedMediaType = item?.mediaType?.trim()?.toLowerCase() || "";
-        const isVisualSoundCategory =
-          normalizedCategoryName === MOOD_SOUND_CATEGORY_NAME;
+  const soundCategory = (categoriesResult?.data || []).find((category) => {
+    const normalizedCategoryName =
+      category?.categoryName?.trim()?.toLowerCase() || "";
+    const normalizedCategorySlug = category?.slug?.trim()?.toLowerCase() || "";
 
-        return (
-          item?.status === "active" &&
-          item?.url &&
-          isVisualSoundCategory &&
-          normalizedMediaType === "audio"
-        );
-      }
-    )
-    .map((item, index) => ({
-      id: item?._id,
-      title: item?.originalName || item?.name || `Sound ${index + 1}`,
-      url: item?.url,
-      mediaType: item?.mediaType || "",
-      categoryName: item?.categoryId?.categoryName || "",
-      categorySlug: item?.categoryId?.slug || "",
-    }));
+    return (
+      normalizedCategoryName === MOOD_SOUND_CATEGORY_NAME ||
+      normalizedCategorySlug === MOOD_SOUND_CATEGORY_NAME
+    );
+  });
+
+  if (!soundCategory?._id) {
+    throw new Error("Visual-sounds category was not found.");
+  }
+
+  const categoryMediaResponse = await fetch(
+    `${baseUrl}/api/categories/${soundCategory._id}/media`,
+    {
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  const categoryMediaResult = await categoryMediaResponse.json();
+
+  if (!categoryMediaResponse.ok || !categoryMediaResult?.success) {
+    throw new Error(
+      categoryMediaResult?.message || "Failed to fetch category sounds."
+    );
+  }
+
+  return (categoryMediaResult?.data?.media?.musics || []).map((item, index) => ({
+    id: item?._id,
+    title: item?.name || `Sound ${index + 1}`,
+    url: item?.url,
+    mediaType: item?.mediaType || "audio",
+    categoryName: categoryMediaResult?.data?.category?.name || "",
+    categorySlug: categoryMediaResult?.data?.category?.slug || "",
+  }));
 };
 
 const MoodSetter = ({
