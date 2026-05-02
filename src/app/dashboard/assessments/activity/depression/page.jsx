@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
+import Link from 'next/link';
+import { useStoredAuth } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -54,10 +56,14 @@ const config = {
 };
 
 export default function DepressionAssessment() {
+  const { token } = useStoredAuth();
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const resultsRef = useRef(null);
+  const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || '';
+  const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
   const handleOptionChange = (questionIndex, value) => {
     setAnswers(prev => ({
@@ -66,23 +72,79 @@ export default function DepressionAssessment() {
     }));
   };
 
-  const calculateScore = (e) => {
+  const calculateScore = async (e) => {
     e.preventDefault();
+    setSubmitError('');
+
+    const rawAnswers = config.items.map((_, i) => answers[i]);
+
+    try {
+      if (token && baseUrl) {
+        const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            trackerType: 'depression',
+            answers: rawAnswers,
+            stemValue: null,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result?.success && result?.data) {
+          const itemScores = (result.data.itemScores || []).map((itemScore) => ({
+            raw: itemScore.rawAnswer,
+            scored: itemScore.scored,
+            reverse: !!config.items[itemScore.itemIndex]?.reverse,
+          }));
+          const band =
+            config.bands.find((entry) => entry.label === result.data.severityBand) ||
+            config.bands.find((entry) => (result.data.totalScore ?? 0) <= entry.max);
+          const bandIndex = config.bands.indexOf(band);
+
+          // Alert calculation (local filter for alerts if needed)
+          const triggeredAlerts = config.alerts.filter((alert) => {
+            const score = itemScores[alert.item - 1].scored;
+            if (alert.trigger === '>=1') return score >= 1;
+            if (alert.trigger === '>=2') return score >= 2;
+            if (alert.trigger === '>=3') return score >= 3;
+            return false;
+          });
+
+          setResults({
+            total: result.data.totalScore ?? 0,
+            itemScores,
+            band,
+            bandIndex,
+            alerts: triggeredAlerts,
+          });
+          setShowResults(true);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit depression tracker:', error);
+      setSubmitError('Could not save this result to your history. Showing local result instead.');
+    }
+
     let total = 0;
     const itemScores = [];
 
     config.items.forEach((item, i) => {
       const raw = answers[i];
-      const scored = item.reverse ? (4 - raw) : raw;
+      const scored = item.reverse ? 4 - raw : raw;
       itemScores.push({ raw, scored, reverse: !!item.reverse });
       total += scored;
     });
 
-    const band = config.bands.find(b => total <= b.max);
+    const band = config.bands.find((b) => total <= b.max);
     const bandIndex = config.bands.indexOf(band);
 
-    // Alert calculation
-    const triggeredAlerts = config.alerts.filter(alert => {
+    const triggeredAlerts = config.alerts.filter((alert) => {
       const score = itemScores[alert.item - 1].scored;
       if (alert.trigger === '>=1') return score >= 1;
       if (alert.trigger === '>=2') return score >= 2;
@@ -95,7 +157,7 @@ export default function DepressionAssessment() {
       itemScores,
       band,
       bandIndex,
-      alerts: triggeredAlerts
+      alerts: triggeredAlerts,
     });
     setShowResults(true);
   };
@@ -225,6 +287,12 @@ export default function DepressionAssessment() {
               Your tracker result
             </div>
 
+            {submitError ? (
+              <div className="mb-6 border-l-2 border-[#6B4D5F] bg-[#F1EEF0] p-4 text-sm leading-relaxed text-[#1A1814]">
+                {submitError}
+              </div>
+            ) : null}
+
             <div className="flex items-baseline gap-4 mb-6">
               <span className="font-fraunces text-7xl md:text-8xl font-normal text-[#6B4D5F] leading-none tracking-tighter tabular-nums">
                 {results.total}
@@ -293,12 +361,35 @@ export default function DepressionAssessment() {
               </div>
             </div>
 
-            <button
-              onClick={resetTracker}
-              className="mt-12 text-[12px] text-[#4A4540] border border-[#DDD5C5] px-6 py-3 transition-all hover:bg-[#F5F1EA] hover:text-[#1A1814] hover:border-[#1A1814]"
-            >
-              Take again
-            </button>
+            <div className="mt-12 flex flex-wrap gap-4">
+              <button
+                onClick={resetTracker}
+                className="text-[12px] text-[#4A4540] border border-[#DDD5C5] px-6 py-3 transition-all hover:bg-[#F5F1EA] hover:text-[#1A1814] hover:border-[#1A1814]"
+              >
+                Take again
+              </button>
+              <Link
+                href="/dashboard/results"
+                className="text-[12px] bg-[#1A1814] text-[#F5F1EA] px-6 py-3 transition-all hover:bg-[#6B4D5F] flex items-center gap-2"
+              >
+                View Progress Chart
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              </Link>
+            </div>
           </section>
         )}
 

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
+import Link from 'next/link';
+import { useStoredAuth } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -74,10 +76,14 @@ const config = {
 };
 
 export default function Pcl5PtsdChecklistSession10Page() {
+  const { token } = useStoredAuth();
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const resultsRef = useRef(null);
+  const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || '';
+  const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
   const handleOptionChange = (questionIndex, value) => {
     setAnswers((prev) => ({
@@ -86,8 +92,54 @@ export default function Pcl5PtsdChecklistSession10Page() {
     }));
   };
 
-  const calculateScore = (e) => {
+  const calculateScore = async (e) => {
     e.preventDefault();
+    setSubmitError('');
+
+    const rawAnswers = config.items.map((_, i) => answers[i]);
+
+    try {
+      if (token && baseUrl) {
+        const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            trackerType: 'self-esteem',
+            answers: rawAnswers,
+            stemValue: null,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result?.success && result?.data) {
+          const itemScores = (result.data.itemScores || []).map((itemScore) => ({
+            raw: itemScore.rawAnswer,
+            scored: itemScore.scored,
+            reverse: !!config.items[itemScore.itemIndex]?.reverse,
+          }));
+          const band =
+            config.bands.find((entry) => entry.label === result.data.severityBand) ||
+            config.bands.find((entry) => (result.data.totalScore ?? 0) <= entry.max);
+          const bandIndex = config.bands.indexOf(band);
+
+          setResults({
+            total: result.data.totalScore ?? 0,
+            itemScores,
+            band,
+            bandIndex,
+          });
+          setShowResults(true);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit self-esteem tracker:', error);
+      setSubmitError('Could not save this result to your history. Showing local result instead.');
+    }
 
     let total = 0;
     const itemScores = [];
@@ -181,9 +233,8 @@ export default function Pcl5PtsdChecklistSession10Page() {
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
                 <div
-                  className={`font-fraunces mb-6 text-xl font-normal leading-snug tracking-tight text-[#1A1814] md:text-[21px] opsz-36 ${
-                    item.reverse ? "after:align-super after:text-sm after:text-[#8A8278] after:content-['\\00a0\\21bb']" : ''
-                  }`}
+                  className={`font-fraunces mb-6 text-xl font-normal leading-snug tracking-tight text-[#1A1814] md:text-[21px] opsz-36 ${item.reverse ? "after:align-super after:text-sm after:text-[#8A8278] after:content-['\\00a0\\21bb']" : ''
+                    }`}
                 >
                   {item.text}
                 </div>
@@ -238,6 +289,12 @@ export default function Pcl5PtsdChecklistSession10Page() {
           >
             <div className="mb-4 text-[11px] uppercase tracking-[0.18em] text-[#8A8278]">Your tracker result</div>
 
+            {submitError ? (
+              <div className="mb-6 border-l-2 border-[#A38442] bg-[#F2F0EB] p-4 text-sm leading-relaxed text-[#1A1814]">
+                {submitError}
+              </div>
+            ) : null}
+
             <div className="mb-6 flex items-baseline gap-4">
               <span className="font-fraunces text-7xl font-normal leading-none tracking-tighter text-[#A38442] md:text-8xl">
                 {results.total}
@@ -254,9 +311,8 @@ export default function Pcl5PtsdChecklistSession10Page() {
               {[0, 1, 2, 3, 4].map((index) => (
                 <div
                   key={index}
-                  className={`h-1.5 transition-colors duration-500 ${
-                    index <= results.bandIndex ? 'bg-[#A38442]' : 'bg-[#DDD5C5]'
-                  }`}
+                  className={`h-1.5 transition-colors duration-500 ${index <= results.bandIndex ? 'bg-[#A38442]' : 'bg-[#DDD5C5]'
+                    }`}
                 />
               ))}
             </div>
@@ -292,13 +348,36 @@ export default function Pcl5PtsdChecklistSession10Page() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={resetTracker}
-              className="mt-12 border border-[#DDD5C5] px-6 py-3 text-[12px] text-[#4A4540] transition-all hover:border-[#1A1814] hover:bg-[#F5F1EA] hover:text-[#1A1814]"
-            >
-              Take again
-            </button>
+            <div className="mt-12 flex flex-wrap gap-4">
+              <button
+                type="button"
+                onClick={resetTracker}
+                className="border border-[#DDD5C5] px-6 py-3 text-[12px] text-[#4A4540] transition-all hover:border-[#1A1814] hover:bg-[#F5F1EA] hover:text-[#1A1814]"
+              >
+                Take again
+              </button>
+              <Link
+                href="/dashboard/results"
+                className="text-[12px] bg-[#1A1814] text-[#F5F1EA] px-6 py-3 transition-all hover:bg-[#A38442] flex items-center gap-2"
+              >
+                View Progress Chart
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              </Link>
+            </div>
           </section>
         )}
 

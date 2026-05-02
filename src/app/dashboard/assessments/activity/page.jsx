@@ -1,13 +1,46 @@
 "use client";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function RecentActivityPage() {
-  const activities = [
+  const [anxietyConfig, setAnxietyConfig] = useState(null);
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+
+  useEffect(() => {
+    const fetchAnxietyConfig = async () => {
+      if (!baseUrl) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${baseUrl}/api/symptom-tracker/configs/anxiety`,
+          {
+            cache: "no-store",
+          }
+        );
+        const result = await response.json();
+
+        if (response.ok && result?.success && result?.data) {
+          setAnxietyConfig(result.data);
+        }
+      } catch (error) {
+        console.error("Failed to load anxiety config:", error);
+      }
+    };
+
+    fetchAnxietyConfig();
+  }, [baseUrl]);
+
+  const activities = useMemo(() => [
     {
       id: 1,
-      title: "Anxiety Scale ",
+      title: anxietyConfig?.name ? `${anxietyConfig.name} Scale` : "Anxiety Scale ",
       phase: "Phase-2 (12)",
       date: "Oct 24, 2025",
       href: "/dashboard/assessments/activity/anxiety",
@@ -101,7 +134,7 @@ export default function RecentActivityPage() {
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-12",
       image: "/activity/trauma.jpg",
     },
-  ];
+  ], [anxietyConfig]);
 
   return (
     <div className="bg-[#ffffff]/50  rounded-3xl shadow-2xl p-8 lg:p-12 border border-white/20 min-h-screen">
@@ -176,6 +209,35 @@ export default function RecentActivityPage() {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-12 flex justify-center">
+        <Link
+          href="/dashboard/results"
+          className="flex items-center gap-3 bg-[#1A1814] hover:bg-[#2D2A26] text-[#F5F1EA] px-8 py-4 rounded-2xl font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+        >
+          <div className="bg-white/10 p-2 rounded-lg">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+          </div>
+          <div className="text-left">
+            <div className="text-[12px] opacity-80 leading-none mb-1">Want to see more?</div>
+            <div className="text-[16px]">View Your Progress Charts</div>
+          </div>
+        </Link>
       </div>
     </div>
   );

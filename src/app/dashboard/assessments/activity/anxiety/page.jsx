@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
+import Link from 'next/link';
+import { useStoredAuth } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -46,10 +48,15 @@ const config = {
 };
 
 export default function AnxietyAssessment() {
+  const { token } = useStoredAuth();
   const [answers, setAnswers] = useState({});
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState(null);
+  const [submitError, setSubmitError] = useState('');
   const resultsRef = useRef(null);
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || '';
+  const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
   const handleOptionChange = (questionIndex, value) => {
     setAnswers(prev => ({
@@ -58,8 +65,55 @@ export default function AnxietyAssessment() {
     }));
   };
 
-  const calculateScore = (e) => {
+  const calculateScore = async (e) => {
     e.preventDefault();
+    setSubmitError('');
+
+    const rawAnswers = config.items.map((_, i) => answers[i]);
+
+    try {
+      if (token && baseUrl) {
+        const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            trackerType: 'anxiety',
+            answers: rawAnswers,
+            stemValue: null,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result?.success && result?.data) {
+          const itemScores = (result.data.itemScores || []).map((itemScore) => ({
+            raw: itemScore.rawAnswer,
+            scored: itemScore.scored,
+            reverse: !!config.items[itemScore.itemIndex]?.reverse,
+          }));
+          const band = config.bands.find(
+            (entry) => entry.label === result.data.severityBand
+          ) || config.bands.find((entry) => (result.data.totalScore ?? 0) <= entry.max);
+          const bandIndex = config.bands.indexOf(band);
+
+          setResults({
+            total: result.data.totalScore ?? 0,
+            itemScores,
+            band,
+            bandIndex,
+          });
+          setShowResults(true);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to submit anxiety tracker:', error);
+      setSubmitError('Could not save this result to your history. Showing local result instead.');
+    }
+
     let total = 0;
     const itemScores = [];
 
@@ -207,6 +261,12 @@ export default function AnxietyAssessment() {
               Your tracker result
             </div>
 
+            {submitError ? (
+              <div className="mb-6 border-l-2 border-[#A8553D] bg-[#F4E4DD] p-4 text-sm leading-relaxed text-[#1A1814]">
+                {submitError}
+              </div>
+            ) : null}
+
             <div className="flex items-baseline gap-4 mb-6">
               <span className="font-fraunces text-7xl md:text-8xl font-normal text-[#4A7373] leading-none tracking-tighter tabular-nums">
                 {results.total}
@@ -261,12 +321,35 @@ export default function AnxietyAssessment() {
               </div>
             </div>
 
-            <button
-              onClick={resetTracker}
-              className="mt-12 text-[12px] text-[#4A4540] border border-[#DDD5C5] px-6 py-3 transition-all hover:bg-[#F5F1EA] hover:text-[#1A1814] hover:border-[#1A1814]"
-            >
-              Take again
-            </button>
+            <div className="mt-12 flex flex-wrap gap-4">
+              <button
+                onClick={resetTracker}
+                className="text-[12px] text-[#4A4540] border border-[#DDD5C5] px-6 py-3 transition-all hover:bg-[#F5F1EA] hover:text-[#1A1814] hover:border-[#1A1814]"
+              >
+                Take again
+              </button>
+              <Link
+                href="/dashboard/results"
+                className="text-[12px] bg-[#1A1814] text-[#F5F1EA] px-6 py-3 transition-all hover:bg-[#4A7373] flex items-center gap-2"
+              >
+                View Progress Chart
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              </Link>
+            </div>
           </section>
         )}
 

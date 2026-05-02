@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   Area,
@@ -7,174 +7,239 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
+  Tooltip,
 } from "recharts";
+import { useStoredAuth } from "@/redux/authStorage";
+
+const TRACKERS = [
+  {
+    trackerType: "anxiety",
+    fallbackTitle: "Anxiety Scale",
+    color: "#4A7373",
+    fillId: "anxietyFill",
+  },
+  {
+    trackerType: "depression",
+    fallbackTitle: "Depression Scale",
+    color: "#6B4D5F",
+    fillId: "depressionFill",
+  },
+  {
+    trackerType: "anger",
+    fallbackTitle: "Anger",
+    color: "#A8553D",
+    fillId: "angerFill",
+  },
+  {
+    trackerType: "social-phobia",
+    fallbackTitle: "Social Phobia",
+    color: "#5C5E8B",
+    fillId: "socialPhobiaFill",
+  },
+  {
+    trackerType: "ocd",
+    fallbackTitle: "OCD",
+    color: "#6B7F5F",
+    fillId: "ocdFill",
+  },
+  {
+    trackerType: "specific-phobia",
+    fallbackTitle: "Specific Phobia",
+    color: "#7D5A3D",
+    fillId: "specificPhobiaFill",
+  },
+  {
+    trackerType: "pain",
+    fallbackTitle: "Pain",
+    color: "#9B5D52",
+    fillId: "painFill",
+  },
+  {
+    trackerType: "stress-burnout",
+    fallbackTitle: "Stress & Burnout",
+    color: "#A07238",
+    fillId: "stressFill",
+  },
+  {
+    trackerType: "addiction",
+    fallbackTitle: "Addiction",
+    color: "#5C4438",
+    fillId: "addictionFill",
+  },
+  {
+    trackerType: "self-esteem",
+    fallbackTitle: "Self-Esteem",
+    color: "#A38442",
+    fillId: "selfEsteemFill",
+  },
+  {
+    trackerType: "worry",
+    fallbackTitle: "Worry",
+    color: "#4F627A",
+    fillId: "worryFill",
+  },
+  {
+    trackerType: "trauma",
+    fallbackTitle: "Trauma",
+    color: "#3F3F47",
+    fillId: "traumaFill",
+  },
+];
+
+const formatDateLabel = (dateValue, index) => {
+  if (!dateValue) {
+    return `Entry ${index + 1}`;
+  }
+
+  const parsedDate = new Date(dateValue);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return `Entry ${index + 1}`;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    day: "numeric"
+  }).format(parsedDate);
+};
 
 export default function AssessmentChart() {
-  const assessments = [
-    {
-      title: "Anxiety Scale",
-      color: "#4A7373",
-      fillId: "anxietyFill",
-      data: [
-        { month: "May", value: 26 },
-        { month: "Jun", value: 50 },
-        { month: "Jul", value: 20 },
-        { month: "Aug", value: 19 },
-        { month: "Sep", value: 18 },
-        { month: "Oct", value: 16 },
-      ],
-    },
-    {
-      title: "Depression Scale",
-      color: "#6B4D5F",
-      fillId: "depressionFill",
-      data: [
-        { month: "May", value: 24 },
-        { month: "Jun", value: 22 },
-        { month: "Jul", value: 19 },
-        { month: "Aug", value: 17 },
-        { month: "Sep", value: 16 },
-        { month: "Oct", value: 14 },
-      ],
-    },
-    {
-      title: "Anger",
-      color: "#A8553D",
-      fillId: "angerFill",
-      data: [
-        { month: "May", value: 20 },
-        { month: "Jun", value: 18 },
-        { month: "Jul", value: 21 },
-        { month: "Aug", value: 16 },
-        { month: "Sep", value: 14 },
-        { month: "Oct", value: 12 },
-      ],
-    },
-    {
-      title: "Social Phobia",
-      color: "#5C5E8B",
-      fillId: "socialPhobiaFill",
-      data: [
-        { month: "May", value: 28 },
-        { month: "Jun", value: 25 },
-        { month: "Jul", value: 22 },
-        { month: "Aug", value: 20 },
-        { month: "Sep", value: 18 },
-        { month: "Oct", value: 15 },
-      ],
-    },
-    {
-      title: "OCD",
-      color: "#6B7F5F",
-      fillId: "ocdFill",
-      data: [
-        { month: "May", value: 25 },
-        { month: "Jun", value: 24 },
-        { month: "Jul", value: 22 },
-        { month: "Aug", value: 19 },
-        { month: "Sep", value: 17 },
-        { month: "Oct", value: 15 },
-      ],
-    },
-    {
-      title: "Specific Phobia",
-      color: "#7D5A3D",
-      fillId: "specificPhobiaFill",
-      data: [
-        { month: "May", value: 21 },
-        { month: "Jun", value: 20 },
-        { month: "Jul", value: 18 },
-        { month: "Aug", value: 16 },
-        { month: "Sep", value: 14 },
-        { month: "Oct", value: 11 },
-      ],
-    },
-    {
-      title: "Pain",
-      color: "#9B5D52",
-      fillId: "painFill",
-      data: [
-        { month: "May", value: 23 },
-        { month: "Jun", value: 24 },
-        { month: "Jul", value: 21 },
-        { month: "Aug", value: 20 },
-        { month: "Sep", value: 18 },
-        { month: "Oct", value: 17 },
-      ],
-    },
-    {
-      title: "Stress & Burnout",
-      color: "#A07238",
-      fillId: "stressFill",
-      data: [
-        { month: "May", value: 29 },
-        { month: "Jun", value: 27 },
-        { month: "Jul", value: 24 },
-        { month: "Aug", value: 23 },
-        { month: "Sep", value: 19 },
-        { month: "Oct", value: 16 },
-      ],
-    },
-    {
-      title: "Addiction",
-      color: "#5C4438",
-      fillId: "addictionFill",
-      data: [
-        { month: "May", value: 19 },
-        { month: "Jun", value: 22 },
-        { month: "Jul", value: 20 },
-        { month: "Aug", value: 17 },
-        { month: "Sep", value: 15 },
-        { month: "Oct", value: 13 },
-      ],
-    },
-    {
-      title: "Self-Esteem",
-      color: "#A38442",
-      fillId: "selfEsteemFill",
-      data: [
-        { month: "May", value: 11 },
-        { month: "Jun", value: 14 },
-        { month: "Jul", value: 16 },
-        { month: "Aug", value: 18 },
-        { month: "Sep", value: 21 },
-        { month: "Oct", value: 24 },
-      ],
-    },
-    {
-      title: "Worry",
-      color: "#4F627A",
-      fillId: "worryFill",
-      data: [
-        { month: "May", value: 27 },
-        { month: "Jun", value: 25 },
-        { month: "Jul", value: 22 },
-        { month: "Aug", value: 20 },
-        { month: "Sep", value: 17 },
-        { month: "Oct", value: 15 },
-      ],
-    },
-    {
-      title: "Trauma",
-      color: "#3F3F47",
-      fillId: "traumaFill",
-      data: [
-        { month: "May", value: 30 },
-        { month: "Jun", value: 28 },
-        { month: "Jul", value: 24 },
-        { month: "Aug", value: 21 },
-        { month: "Sep", value: 19 },
-        { month: "Oct", value: 16 },
-      ],
-    },
-  ];
+  const { token } = useStoredAuth();
+  const rawBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
+  const baseUrl = rawBaseUrl.endsWith("/")
+    ? rawBaseUrl.slice(0, -1)
+    : rawBaseUrl;
+  const [chartsByType, setChartsByType] = useState(() =>
+    Object.fromEntries(
+      TRACKERS.map(({ trackerType, fallbackTitle }) => [
+        trackerType,
+        { title: fallbackTitle, data: [] },
+      ])
+    )
+  );
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      if (!baseUrl) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const nextCharts = Object.fromEntries(
+          TRACKERS.map(({ trackerType, fallbackTitle }) => [
+            trackerType,
+            { title: fallbackTitle, data: [] },
+          ])
+        );
+
+        const configResponse = await fetch(`${baseUrl}/api/symptom-tracker/configs`, {
+          cache: "no-store",
+        });
+
+        if (configResponse.ok) {
+          const configResult = await configResponse.json();
+          const configs = Array.isArray(configResult?.data) ? configResult.data : [];
+
+          configs.forEach((config) => {
+            if (!nextCharts[config?.trackerType]) {
+              return;
+            }
+
+            nextCharts[config.trackerType].title =
+              config?.name || nextCharts[config.trackerType].title;
+          });
+        }
+
+        if (token) {
+          const historyResults = await Promise.all(
+            TRACKERS.map(async ({ trackerType }) => {
+              const response = await fetch(
+                `${baseUrl}/api/symptom-tracker/history?trackerType=${trackerType}&page=1&limit=7`,
+                {
+                  cache: "no-store",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
+
+              if (!response.ok) {
+                return { trackerType, submissions: [] };
+              }
+
+              const result = await response.json();
+
+              return {
+                trackerType,
+                submissions: Array.isArray(result?.data?.submissions)
+                  ? result.data.submissions
+                  : [],
+              };
+            })
+          );
+
+          historyResults.forEach(({ trackerType, submissions }) => {
+            if (!nextCharts[trackerType]) return;
+
+            const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            const dayData = days.map(day => ({ label: day, value: null }));
+
+            // Map submissions to the correct weekday slot
+            // We'll take the most recent submission for each day of the current week (or last 7 days)
+            submissions.forEach(submission => {
+              const date = new Date(submission?.submittedAt || submission?.createdAt);
+              if (Number.isNaN(date.getTime())) return;
+
+              // getDay() returns 0 for Sunday, 1 for Monday...
+              // We want 0 for Monday, 6 for Sunday
+              let dayIndex = date.getDay() - 1;
+              if (dayIndex === -1) dayIndex = 6; // Sunday
+
+              // Only fill if it's empty (taking the latest one since history is usually desc)
+              if (dayData[dayIndex].value === null) {
+                dayData[dayIndex].value = submission?.totalScore ?? 0;
+              }
+            });
+
+            nextCharts[trackerType].data = dayData;
+          });
+        }
+
+        setChartsByType(nextCharts);
+      } catch (error) {
+        console.error("Failed to load tracker chart data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, [baseUrl, token]);
+
+  const assessments = useMemo(
+    () =>
+      TRACKERS.map((tracker) => ({
+        ...tracker,
+        title:
+          chartsByType[tracker.trackerType]?.title || tracker.fallbackTitle,
+        data: chartsByType[tracker.trackerType]?.data || [],
+      })),
+    [chartsByType]
+  );
 
   return (
     <div className="mt-2">
+      {isLoading ? (
+        <div className="mb-4 text-sm text-stone-500">Loading your result history...</div>
+      ) : null}
+
       <div className="space-y-6">
         {assessments.map((assessment) => (
           <div
-            key={assessment.title}
+            key={assessment.trackerType}
             className="rounded-[28px] border border-stone-200/80 bg-[#F8F7F3] p-6 shadow-[0_18px_40px_rgba(28,25,23,0.08)] md:p-8"
           >
             <div className="mb-4 flex items-start justify-between gap-4">
@@ -186,68 +251,95 @@ export default function AssessmentChart() {
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ backgroundColor: assessment.color }}
                 ></div>
-                <span>Last 6 months</span>
+                <span>Last 7 entries</span>
               </div>
             </div>
 
             <div className="h-[180px] md:h-[210px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={assessment.data}
-                  margin={{ top: 10, right: 8, left: -18, bottom: 0 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id={assessment.fillId}
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop
-                        offset="5%"
-                        stopColor={assessment.color}
-                        stopOpacity={0.22}
-                      />
-                      <stop
-                        offset="95%"
-                        stopColor={assessment.color}
-                        stopOpacity={0.02}
-                      />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="0"
-                    stroke="#E7E5E4"
-                    vertical={true}
-                    horizontal={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    dy={12}
-                    tick={{ fill: "#78716C", fontSize: 12 }}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    dx={-6}
-                    tick={{ fill: "#A8A29E", fontSize: 11 }}
-                    domain={[0, 40]}
-                    ticks={[0, 10, 20, 30, 40]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={assessment.color}
-                    strokeWidth={1.5}
-                    fill={`url(#${assessment.fillId})`}
-                    dot={false}
-                    activeDot={{ r: 3, fill: assessment.color, strokeWidth: 0 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {assessment.data.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={assessment.data}
+                    margin={{ top: 10, right: 8, left: -18, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient
+                        id={assessment.fillId}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor={assessment.color}
+                          stopOpacity={0.22}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor={assessment.color}
+                          stopOpacity={0.02}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="0"
+                      stroke="#E7E5E4"
+                      vertical={true}
+                      horizontal={false}
+                    />
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      dy={12}
+                      tick={{ fill: assessment.color, fontSize: 12, fontWeight: "500" }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      dx={-6}
+                      tick={{ fill: "#A8A29E", fontSize: 11 }}
+                      domain={[0, 40]}
+                      ticks={[0, 10, 20, 30, 40]}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#FFF",
+                        borderRadius: "12px",
+                        border: "1px solid #E7E5E4",
+                        fontSize: "13px",
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+                      }}
+                      labelStyle={{ fontWeight: "600", marginBottom: "4px" }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke={assessment.color}
+                      strokeWidth={2.5}
+                      fill={`url(#${assessment.fillId})`}
+                      connectNulls={true}
+                      dot={{
+                        r: 4,
+                        fill: assessment.color,
+                        strokeWidth: 2,
+                        stroke: "#fff"
+                      }}
+                      activeDot={{
+                        r: 6,
+                        fill: assessment.color,
+                        strokeWidth: 2,
+                        stroke: "#fff"
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-[20px] border border-dashed border-stone-200 bg-white/40 text-sm text-stone-500">
+                  No results yet for this assessment.
+                </div>
+              )}
             </div>
           </div>
         ))}
