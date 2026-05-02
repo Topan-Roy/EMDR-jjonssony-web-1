@@ -137,6 +137,10 @@ export default function AssessmentChart() {
 
         const configResponse = await fetch(`${baseUrl}/api/symptom-tracker/configs`, {
           cache: "no-store",
+          headers: {
+            'Accept': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
         });
 
         if (configResponse.ok) {
@@ -161,7 +165,8 @@ export default function AssessmentChart() {
                 {
                   cache: "no-store",
                   headers: {
-                    Authorization: `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                   },
                 }
               );

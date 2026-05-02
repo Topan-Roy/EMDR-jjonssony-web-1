@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
 import Link from 'next/link';
-import { useStoredAuth } from '@/redux/authStorage';
+import { useStoredAuth, getStoredTokens } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -80,11 +80,13 @@ export default function DepressionAssessment() {
 
     try {
       if (token && baseUrl) {
+        const { token: currentToken } = getStoredTokens();
         const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${currentToken || token}`,
           },
           body: JSON.stringify({
             trackerType: 'depression',
@@ -324,7 +326,7 @@ export default function DepressionAssessment() {
             </div>
 
             {/* Alerts */}
-            {results.alerts.length > 0 && (
+            {results.alerts && results.alerts.length > 0 && (
               <div className="mt-8 space-y-4">
                 {results.alerts.map((alert, i) => (
                   <div key={i} className="bg-[#F4E4DD] border-l-2 border-[#A8553D] p-5 text-sm leading-relaxed text-[#1A1814]">

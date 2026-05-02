@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
 import Link from 'next/link';
-import { useStoredAuth } from '@/redux/authStorage';
+import { useStoredAuth, getStoredTokens } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -100,11 +100,13 @@ export default function Pcl5PtsdChecklistSession10Page() {
 
     try {
       if (token && baseUrl) {
+        const { token: currentToken } = getStoredTokens();
         const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${currentToken || token}`,
           },
           body: JSON.stringify({
             trackerType: 'self-esteem',

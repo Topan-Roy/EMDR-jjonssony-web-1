@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Fraunces, Instrument_Sans } from 'next/font/google';
 import Link from 'next/link';
-import { useStoredAuth } from '@/redux/authStorage';
+import { useStoredAuth, getStoredTokens } from '@/redux/authStorage';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -111,11 +111,13 @@ export default function Pcl5PtsdChecklistSession9Page() {
 
     try {
       if (token && baseUrl) {
+        const { token: currentToken } = getStoredTokens();
         const response = await fetch(`${baseUrl}/api/symptom-tracker/submit`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${currentToken || token}`,
           },
           body: JSON.stringify({
             trackerType: 'addiction',
@@ -142,6 +144,7 @@ export default function Pcl5PtsdChecklistSession9Page() {
             itemScores,
             band,
             bandIndex,
+            alerts: [],
           });
           setShowResults(true);
           return;
@@ -374,7 +377,7 @@ export default function Pcl5PtsdChecklistSession9Page() {
               <div>Severe</div>
             </div>
 
-            {results.alerts.length > 0 && (
+            {results.alerts && results.alerts.length > 0 && (
               <div className="mt-8 space-y-4">
                 {results.alerts.map((alert, index) => (
                   <div key={index} className="border-l-2 border-[#A8553D] bg-[#F4E4DD] p-5 text-sm leading-relaxed text-[#1A1814]">
