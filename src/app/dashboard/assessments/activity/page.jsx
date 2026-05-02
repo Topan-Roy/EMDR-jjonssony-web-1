@@ -11,6 +11,7 @@ export default function RecentActivityPage() {
       phase: "Phase-2 (12)",
       date: "Oct 24, 2025",
       href: "/dashboard/assessments/activity/anxiety",
+      image: "/activity/Social anxiety (1).jpg",
     },
     {
       id: 2,
@@ -18,6 +19,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (15)",
       date: "Oct 20, 2025",
       href: "/dashboard/assessments/activity/depression",
+      image: "/activity/selfesteem (1).jpg",
     },
     {
       id: 3,
@@ -25,6 +27,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-3",
+      image: "/activity/anger.jpg",
     },
     {
       id: 4,
@@ -32,6 +35,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-4",
+      image: "/activity/Social anxiety.jpg",
     },
     {
       id: 5,
@@ -39,6 +43,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-5",
+      image: "/activity/ocd.jpg",
     },
     {
       id: 6,
@@ -46,6 +51,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-6",
+      image: "/activity/Phobia questionnaire.jpg",
     },
     {
       id: 6,
@@ -53,6 +59,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-7",
+      image: "/activity/stress.jpg",
     },
     {
       id: 6,
@@ -60,6 +67,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-8",
+      image: "/activity/burnout.jpg",
     },
     {
       id: 6,
@@ -67,6 +75,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-9",
+      image: "/activity/ocd (1).jpg",
     },
     {
       id: 6,
@@ -74,6 +83,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-10",
+      image: "/activity/selfesteem.jpg",
     },
     {
       id: 6,
@@ -81,6 +91,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-11",
+      image: "/activity/worry.jpg",
     },
     {
       id: 6,
@@ -88,6 +99,7 @@ export default function RecentActivityPage() {
       phase: "Phase-1 (22)",
       date: "Oct 15, 2025",
       href: "/dashboard/assessments/activity/pcl-5-ptsd-checklist-session-12",
+      image: "/activity/trauma.jpg",
     },
   ];
 
@@ -109,8 +121,8 @@ export default function RecentActivityPage() {
               <div className="flex items-center gap-5">
                 <div className="w-14 h-14 overflow-hidden rounded-full bg-[#DBE5DE] flex-shrink-0 transition-colors duration-200 group-hover:bg-[#D4DDD6] group-active:bg-[#CCD6CF]">
                   <Image
-                    src="/12seson.jpg"
-                    alt="Session"
+                    src={activity.image || "/12seson.jpg"}
+                    alt={activity.title}
                     width={56}
                     height={56}
                     className="h-full w-full object-cover"

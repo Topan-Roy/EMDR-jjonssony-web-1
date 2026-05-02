@@ -17,7 +17,7 @@ export default function AssessmentChart() {
       fillId: "anxietyFill",
       data: [
         { month: "May", value: 26 },
-        { month: "Jun", value: 23 },
+        { month: "Jun", value: 50 },
         { month: "Jul", value: 20 },
         { month: "Aug", value: 19 },
         { month: "Sep", value: 18 },
