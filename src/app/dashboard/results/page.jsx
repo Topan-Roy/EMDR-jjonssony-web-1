@@ -1,8 +1,5 @@
 "use client";
 import React from "react";
-
-
-import EarningSummary from "@/components/dashboard/EarningSummary";
 import AssessmentChart from "@/components/dashboard/AssessmentChart";
 
 export default function ResultsPage() {
@@ -13,7 +10,6 @@ export default function ResultsPage() {
       </div>
 
       <div className="flex flex-col gap-10 mt-8">
-        <EarningSummary></EarningSummary>
         <AssessmentChart></AssessmentChart> 
        
       </div>
