@@ -31,11 +31,13 @@ export default function BilateralDirectionSelector({ selectedId, onSelect }) {
           >
             <item.Icon
               size={24}
-              className={`mb-2 ${
-                selectedId === item.id ? "text-stone-900" : "text-stone-300"
+              className={`mb-2 transition-colors duration-300 ${
+                selectedId === item.id ? "text-[#4A7C59]" : "text-stone-500"
               }`}
             />
-            <span className="text-stone-900 text-xs font-bold leading-tight text-center">
+            <span className={`text-xs font-bold leading-tight text-center transition-colors duration-300 ${
+                selectedId === item.id ? "text-[#4A7C59]" : "text-stone-700"
+              }`}>
               {item.name}
             </span>
           </div>

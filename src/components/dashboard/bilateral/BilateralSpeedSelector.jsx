@@ -37,7 +37,7 @@ export default function BilateralSpeedSelector({ selectedId, onSelect }) {
             onClick={() => onSelect(item.id)}
             className={`flex flex-col items-center justify-center p-4 aspect-square rounded-2xl cursor-pointer transition-all
               ${selectedId === item.id
-                ? "bg-white shadow-md border-2 border-dashed border-blue-400 scale-95"
+                ? "bg-white shadow-md border-2 border-dashed border-[#4A7C59] scale-95"
                 : "bg-white/60 hover:bg-white/80"
               }
             `}
@@ -52,12 +52,18 @@ export default function BilateralSpeedSelector({ selectedId, onSelect }) {
             </div>
 
             {/* Name */}
-            <span className="text-stone-900 text-sm font-bold">
+            <span className={`text-sm font-bold transition-colors duration-300 ${
+              selectedId === item.id ? "text-[#4A7C59]" : "text-stone-900"
+            }`}>
               {item.name}
             </span>
 
             {/* Detail */}
-            <span className="text-stone-400 text-[10px]">{item.detail}</span>
+            <span className={`text-[10px] transition-colors duration-300 ${
+              selectedId === item.id ? "text-[#4A7C59]/80" : "text-stone-500"
+            }`}>
+              {item.detail}
+            </span>
           </div>
         ))}
       </div>
