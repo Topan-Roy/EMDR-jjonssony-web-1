@@ -11,7 +11,7 @@ import BilateralSpeedSelector from "@/components/dashboard/bilateral/BilateralSp
 import BilateralDirectionSelector from "@/components/dashboard/bilateral/BilateralDirectionSelector";
 import { Save, Play } from "lucide-react";
 import { useStoredAuth } from "@/redux/authStorage";
-import { updateSessionProgress } from "@/utils/sessionProgress";
+import { updateSessionProgress, checkSessionAccess } from "@/utils/sessionProgress";
 
 const postBilateralSettings = async ({ baseUrl, token, payload }) => {
   const response = await fetch(`${baseUrl}/api/bilateral/settings`, {
@@ -159,7 +159,29 @@ export default function BilateralSettingsPage() {
   };
 
   useEffect(() => {
-    if (!currentPayloadSignature || isLoadingMedia) {
+    if (!token || !baseUrl) return;
+
+    const runAccessCheck = async () => {
+      const activeJourneyId = localStorage.getItem("activeJourneyId");
+      if (activeJourneyId) {
+        const access = await checkSessionAccess({
+          baseUrl,
+          token,
+          journeyId: activeJourneyId,
+          requiredSession: 6,
+        });
+
+        if (!access.allowed && access.redirectTo) {
+          router.replace(access.redirectTo);
+        }
+      }
+    };
+
+    runAccessCheck();
+  }, [token, baseUrl, router]);
+
+  useEffect(() => {
+    if (baseUrl && token && !isLoadingMedia) {
       return undefined;
     }
 

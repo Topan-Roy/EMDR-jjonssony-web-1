@@ -196,10 +196,12 @@ export default function AnxietyCard() {
       router.push(`/dashboard/EMDRCompanion/session/next?journeyId=${journey.id}&title=${encodeURIComponent(journey.title)}`);
     } else if (count === 2) {
       router.push(`/dashboard/EMDRCompanion/session/next/calm-space`);
-    } else if (count === 3 || count === 4) {
+    } else if (count === 3) {
       router.push(`/dashboard/EMDRCompanion`);
-    } else {
+    } else if (count === 4) {
       router.push(`/dashboard/EMDRCompanion/session/session5`);
+    } else {
+      router.push(`/dashboard/resources/bilateral`);
     }
   };
 

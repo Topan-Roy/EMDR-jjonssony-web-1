@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStoredAuth } from "@/redux/authStorage";
-import { updateSessionProgress } from "@/utils/sessionProgress";
+import { updateSessionProgress, checkSessionAccess } from "@/utils/sessionProgress";
 import VisualSelector from "@/components/dashboard/EMDRCompanion/CalmSpace/VisualSelector";
 import PlaceDescription from "@/components/dashboard/EMDRCompanion/CalmSpace/PlaceDescription";
 import MoodSetter from "@/components/dashboard/EMDRCompanion/CalmSpace/MoodSetter";
@@ -238,6 +238,22 @@ const MeditationSpaceApp = () => {
       try {
         setIsLoadingVisuals(true);
         setVisualError("");
+
+        const baseUrl = getBaseUrl();
+        const activeJourneyId = localStorage.getItem("activeJourneyId");
+        if (activeJourneyId && token && baseUrl) {
+          const access = await checkSessionAccess({
+            baseUrl,
+            token,
+            journeyId: activeJourneyId,
+            requiredSession: 3,
+          });
+
+          if (!access.allowed && access.redirectTo) {
+            router.replace(access.redirectTo);
+            return;
+          }
+        }
 
         const items = await getCalmSpaceVisuals(token);
         setVisuals(items);

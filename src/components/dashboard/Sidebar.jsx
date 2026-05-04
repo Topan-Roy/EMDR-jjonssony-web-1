@@ -45,6 +45,7 @@ export default function Sidebar() {
                   pathname === "/dashboard/assessments" ||
                   pathname.startsWith("/dashboard/new-roadmap") ||
                   pathname.startsWith("/dashboard/EMDRCompanion") ||
+                  pathname.startsWith("/dashboard/resources/bilateral") ||
                   pathname.startsWith("/dashboard/AssessmentsF")) &&
                 !pathname.startsWith("/dashboard/assessments/activity")
                 : item.href === "/dashboard/progress"
@@ -56,7 +57,9 @@ export default function Sidebar() {
                     pathname.startsWith("/dashboard/emotions") ||
                     pathname.startsWith("/dashboard/behaviours") ||
                     pathname.startsWith("/dashboard/thoughts")
-                    : pathname.startsWith(item.href);
+                    : item.href === "/dashboard/resources"
+                      ? pathname.startsWith("/dashboard/resources") && !pathname.startsWith("/dashboard/resources/bilateral")
+                      : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}

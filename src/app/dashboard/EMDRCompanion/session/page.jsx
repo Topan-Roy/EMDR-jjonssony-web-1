@@ -103,6 +103,12 @@ export default function EMDRSession() {
   ];
 
   useEffect(() => {
+    const activeJourneyId = journeyId || localStorage.getItem("activeJourneyId");
+    if (!activeJourneyId) {
+      router.replace("/dashboard");
+      return;
+    }
+
     const fetchSessionVideo = async () => {
       if (!baseUrl) {
         setVideoError("Video service is not configured.");

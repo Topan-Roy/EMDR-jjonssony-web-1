@@ -1,8 +1,8 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStoredAuth } from "@/redux/authStorage";
-import { updateSessionProgress } from "@/utils/sessionProgress";
+import { updateSessionProgress, checkSessionAccess } from "@/utils/sessionProgress";
 
 export default function Session5Page() {
   const router = useRouter();
@@ -13,6 +13,29 @@ export default function Session5Page() {
 
   const rawBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
   const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+
+  useEffect(() => {
+    if (!token || !baseUrl) return;
+
+    const runAccessCheck = async () => {
+      const activeJourneyId = localStorage.getItem("activeJourneyId");
+      if (activeJourneyId) {
+        const access = await checkSessionAccess({
+          baseUrl,
+          token,
+          journeyId: activeJourneyId,
+          requiredSession: 5,
+        });
+
+        // Only redirect if access is strictly denied and we are not already going to the right place
+        if (!access.allowed && access.redirectTo && !access.redirectTo.includes("session5")) {
+          router.replace(access.redirectTo);
+        }
+      }
+    };
+
+    runAccessCheck();
+  }, [token, baseUrl, router]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -41,7 +64,7 @@ export default function Session5Page() {
       <div className="w-full bg-white/50 rounded-3xl shadow-xl p-6 border border-stone-200">
         <div className="text-center mb-4">
           <h1 className="text-2xl md:text-3xl font-serif text-[#3e4e44] mb-2">
-            Session 5: Deep Processing
+            Deep Processing
           </h1>
           <p className="text-stone-600 text-sm">
             Please watch the following video to continue your EMDR journey.

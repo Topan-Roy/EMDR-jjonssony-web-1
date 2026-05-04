@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useStoredAuth } from "@/redux/authStorage";
-import { updateSessionProgress } from "@/utils/sessionProgress";
+import { updateSessionProgress, checkSessionAccess } from "@/utils/sessionProgress";
 import {
   buildCbtFormulationNodes,
   buildAnswersFromCbtFormulationEntry,
@@ -185,6 +185,22 @@ export default function CBTFormulation() {
       try {
         setIsLoadingOptions(true);
         setOptionsError("");
+
+        // Security Check: User must have completed Session 1 to access Session 2
+        const activeJourneyId = localStorage.getItem("activeJourneyId");
+        if (activeJourneyId) {
+          const access = await checkSessionAccess({
+            baseUrl,
+            token,
+            journeyId: activeJourneyId,
+            requiredSession: 2,
+          });
+
+          if (!access.allowed && access.redirectTo) {
+            router.replace(access.redirectTo);
+            return;
+          }
+        }
 
         const nextOptions = await fetchCbtFormulationOptions({
           baseUrl,
@@ -521,6 +537,7 @@ export default function CBTFormulation() {
                   <AnimatePresence>
                     {answers.thoughts?.completed && (
                       <motion.path
+                        key="path-thoughts"
                         d="M50 20 Q42 38 24 72"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
@@ -535,6 +552,7 @@ export default function CBTFormulation() {
 
                     {answers.feelings?.completed && (
                       <motion.path
+                        key="path-feelings"
                         d="M24 72 Q50 88 76 72"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
@@ -549,6 +567,7 @@ export default function CBTFormulation() {
 
                     {answers.behaviors?.completed && (
                       <motion.path
+                        key="path-behaviors"
                         d="M76 72 Q58 38 50 20"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
@@ -598,6 +617,7 @@ export default function CBTFormulation() {
                   <AnimatePresence>
                     {answers.thoughts?.completed && (
                       <motion.div
+                        key="feelings-trigger"
                         initial={{ opacity: 0, x: -12, y: 10 }}
                         animate={{ opacity: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, x: -12, y: 10 }}
@@ -631,6 +651,7 @@ export default function CBTFormulation() {
                   <AnimatePresence>
                     {answers.feelings?.completed && (
                       <motion.div
+                        key="behaviors-trigger"
                         initial={{ opacity: 0, x: 12, y: 10 }}
                         animate={{ opacity: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, x: 12, y: 10 }}

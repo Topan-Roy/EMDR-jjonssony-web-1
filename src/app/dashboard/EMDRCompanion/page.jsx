@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStoredAuth } from "@/redux/authStorage";
-import { updateSessionProgress } from "@/utils/sessionProgress";
+import { updateSessionProgress, checkSessionAccess } from "@/utils/sessionProgress";
 
 const CURRENT_EMDR_SESSION_STORAGE_KEY = "currentEMDRSessionId";
 
@@ -438,6 +438,28 @@ export default function EMDRCompanion() {
     useState(0);
   const [sessionError, setSessionError] = useState("");
   const [isSyncingSession, setIsSyncingSession] = useState(false);
+
+  useEffect(() => {
+    if (!hasHydrated || !token || !baseUrl) return;
+
+    const runAccessCheck = async () => {
+      const activeJourneyId = localStorage.getItem("activeJourneyId");
+      if (activeJourneyId) {
+        const access = await checkSessionAccess({
+          baseUrl,
+          token,
+          journeyId: activeJourneyId,
+          requiredSession: 4,
+        });
+
+        if (!access.allowed && access.redirectTo) {
+          router.replace(access.redirectTo);
+        }
+      }
+    };
+
+    runAccessCheck();
+  }, [hasHydrated, token, baseUrl, router]);
 
   useEffect(() => {
     if (chatboxRef.current) {
@@ -1293,7 +1315,7 @@ export default function EMDRCompanion() {
                 baseUrl,
                 token,
                 journeyId: activeJourneyId,
-                compledSession: 5,
+                compledSession: 4,
               });
             }
             router.push(nextSessionRoute);
