@@ -5,17 +5,51 @@ import { useRouter } from 'next/navigation';
 import { useStoredAuth } from "@/redux/authStorage";
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
-import Link from 'next/link';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import PaymentModal from '@/components/publicComponents/PaymentModal';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+const isFreeSelectedPlan = (plan) => {
+    const name = String(plan?.name ?? "").trim().toLowerCase();
+    const priceText = String(plan?.price ?? "").trim().toLowerCase();
+    const hasAmount = plan?.amount !== null && plan?.amount !== undefined && plan?.amount !== "";
+    const amount = Number(plan?.amount);
+    const numericPrice = Number(priceText.replace(/[^0-9.-]/g, ""));
+    const hasNumericPrice = /\d/.test(priceText);
+
+    return (
+        Boolean(plan?.isFree) ||
+        name === "free" ||
+        priceText === "free" ||
+        (hasAmount && !Number.isNaN(amount) && amount === 0) ||
+        (hasNumericPrice && !Number.isNaN(numericPrice) && numericPrice === 0)
+    );
+};
+
+const getSubscriptionErrorMessage = (error) => {
+    if (typeof error?.response?.data?.message === "string") {
+        return error.response.data.message;
+    }
+
+    if (typeof error?.response?.data?.error === "string") {
+        return error.response.data.error;
+    }
+
+    if (typeof error?.message === "string") {
+        return error.message;
+    }
+
+    return "Free plan activation failed. Please try again.";
+};
 
 export default function ResultsPage() {
     const { assessmentResults } = useAssessment();
     const router = useRouter();
     const { token } = useStoredAuth();
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [isCompletingFreePlan, setIsCompletingFreePlan] = useState(false);
     const [results, setResults] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedPlan, setSelectedPlan] = useState({ id: "", name: "Hero Plan", price: "120" });
@@ -39,7 +73,11 @@ export default function ResultsPage() {
                 // Get plan from localStorage
                 const storedPlan = localStorage.getItem("selectedPlan");
                 if (storedPlan) {
-                    setSelectedPlan(JSON.parse(storedPlan));
+                    try {
+                        setSelectedPlan(JSON.parse(storedPlan));
+                    } catch (parseError) {
+                        console.error("Error parsing selected plan:", parseError);
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching results:", error);
@@ -64,7 +102,6 @@ export default function ResultsPage() {
     const dissociationScore = results?.scores?.dissociation?.score || 0;
     
     const recommendation = results?.recommendation || "Evaluation complete.";
-    const requiresProfessionalSupport = results?.requiresProfessionalSupport || false;
     const scores = results?.scores || {
         depression: { score: 0, outOf: 27, severity: "minimal" },
         anxiety: { score: 0, outOf: 21, severity: "minimal" },
@@ -74,6 +111,45 @@ export default function ResultsPage() {
     // Rule: Either Total score (Depression + Anxiety) >= 30 OR Dissociation score >= 30 to subscribe
     const totalScore = depressionScore + anxietyScore;
     const canSubscribe = (totalScore >= 30 || dissociationScore >= 30);
+    const isFreePlan = isFreeSelectedPlan(selectedPlan);
+
+    const handleContinue = async () => {
+        if (!isFreePlan) {
+            setIsPaymentModalOpen(true);
+            return;
+        }
+
+        if (!token) {
+            router.push("/authentication/login?redirect=/assessment/results");
+            return;
+        }
+
+        if (!selectedPlan.id) {
+            toast.error("Free plan information is missing. Please select the plan again.");
+            return;
+        }
+
+        setIsCompletingFreePlan(true);
+
+        try {
+            await axios.post(
+                `${baseUrl}/api/subscriptions/subscribe`,
+                { planId: selectedPlan.id },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+
+            localStorage.removeItem("selectedPlan");
+            toast.success("Free plan activated!");
+            router.push("/dashboard/profile");
+        } catch (error) {
+            console.error("Free plan activation error:", error);
+            toast.error(getSubscriptionErrorMessage(error));
+        } finally {
+            setIsCompletingFreePlan(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#FCF9F4] pt-24 px-6 md:px-10 font-sans pb-20">
@@ -174,7 +250,7 @@ export default function ResultsPage() {
                         <div>
                             <h4 className="text-[#1e293b] font-semibold text-lg mb-1">SHOUT Crisis Text Line</h4>
                             <p className="text-[#64748b] text-sm mb-1">24/7 text support for anyone in crisis</p>
-                            <p className="text-sm font-medium text-[#1e293b]">Text "SHOUT" to 85258</p>
+                            <p className="text-sm font-medium text-[#1e293b]">Text &quot;SHOUT&quot; to 85258</p>
                         </div>
 
                         <div>
@@ -196,10 +272,15 @@ export default function ResultsPage() {
 
                     {canSubscribe ? (
                         <button
-                            onClick={() => setIsPaymentModalOpen(true)}
-                            className="flex-1 bg-[#4A7C59] text-white hover:bg-[#456b4c] px-6 py-4 rounded-md font-serif text-lg transition-all shadow-md active:scale-95 text-center"
+                            onClick={handleContinue}
+                            disabled={isCompletingFreePlan}
+                            className="flex-1 bg-[#4A7C59] text-white hover:bg-[#456b4c] px-6 py-4 rounded-md font-serif text-lg transition-all shadow-md active:scale-95 text-center disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                            Continue
+                            {isCompletingFreePlan
+                                ? "Activating..."
+                                : isFreePlan
+                                    ? "Complete"
+                                    : "Continue"}
                         </button>
                     ) : (
                         <div className="flex-1 bg-gray-100 text-gray-400 px-6 py-4 rounded-md font-serif text-lg text-center cursor-not-allowed">
@@ -211,13 +292,15 @@ export default function ResultsPage() {
             </motion.div>
 
             {/* Payment Modal Integration */}
-            <PaymentModal
-                isOpen={isPaymentModalOpen}
-                onClose={() => setIsPaymentModalOpen(false)}
-                planName={selectedPlan.name}
-                price={selectedPlan.price}
-                planId={selectedPlan.id}
-            />
+            {!isFreePlan && (
+                <PaymentModal
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setIsPaymentModalOpen(false)}
+                    planName={selectedPlan.name}
+                    price={selectedPlan.price}
+                    planId={selectedPlan.id}
+                />
+            )}
         </div>
     );
 }

@@ -17,7 +17,6 @@ import {
 import { AppConstants } from "@/utils/app_constant";
 import { createPaymentIntent, confirmPayment } from "@/services/stripeService";
 import { useStoredAuth } from "@/redux/authStorage";
-import { useSubscribeMutation } from "@/redux/api/subscriptionApi";
 
 // Initialize Stripe
 const stripePromise = loadStripe(AppConstants.Publishable_key);
@@ -44,7 +43,6 @@ const CheckoutForm = ({ onClose, planName, price, planId, clientSecret, token })
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [subscribe] = useSubscribeMutation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

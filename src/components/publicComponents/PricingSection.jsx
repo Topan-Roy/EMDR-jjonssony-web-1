@@ -25,21 +25,26 @@ const PricingSection = ({ compact = false, activePlanName }) => {
             const normalizedActive = activePlanName?.trim()?.toLowerCase();
             const normalizedPlan = plan.name?.trim()?.toLowerCase();
             const isActive = normalizedActive && normalizedPlan && normalizedActive === normalizedPlan;
+            const hasPrice = plan.price !== null && plan.price !== undefined && plan.price !== "";
+            const isFree = (hasPrice && Number(plan.price) === 0) || normalizedPlan === "free";
             return {
               id: plan._id,
               name: plan.name,
-              price: plan.price === 0 ? "Free" : `${plan.currency}${plan.price}`,
+              price: isFree ? "Free" : `${plan.currency}${plan.price}`,
+              amount: plan.price,
+              currency: plan.currency,
               duration:
                 plan.interval === "monthly" ? "/month" : `/${plan.interval}`,
               subText: plan.tagline,
               features: plan.features,
               buttonText: isActive
                 ? "Active Plan"
-                : plan.name === "Free"
+                : isFree
                   ? "Apply for Access"
                   : "Get Started",
               hasSpots: plan.isCommunityAccess,
               spots: 12, // Hardcoded as in original, could be from API if available
+              isFree,
               isActive: isActive,
               recommended: plan.name === "Prime Plan", // Keep original recommendation logic
             };
@@ -63,6 +68,26 @@ const PricingSection = ({ compact = false, activePlanName }) => {
       </div>
     );
   }
+
+  const handlePlanSelect = (plan) => {
+    localStorage.setItem(
+      "selectedPlan",
+      JSON.stringify({
+        id: plan.id,
+        name: plan.name,
+        price: plan.price,
+        amount: plan.amount,
+        currency: plan.currency,
+        isFree: plan.isFree,
+      }),
+    );
+
+    router.push(
+      isAuthenticated
+        ? "/consent"
+        : "/authentication/login?redirect=/consent",
+    );
+  };
 
   const CardsGrid = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 items-stretch ">
@@ -140,16 +165,7 @@ const PricingSection = ({ compact = false, activePlanName }) => {
           <div className="mt-auto">
             <button
               disabled={plan.isActive}
-              onClick={() => {
-                // Save selected plan details
-                localStorage.setItem("selectedPlan", JSON.stringify({
-                  id: plan.id,
-                  name: plan.name,
-                  price: plan.price
-                }));
-                // Force redirection to login page with a return path to consent
-                router.push("/authentication/login?redirect=/consent");
-              }}
+              onClick={() => handlePlanSelect(plan)}
               className={`w-full py-2.5 rounded-lg text-[16px] font-medium border-[1.5px] transition-all ${plan.isActive
                 ? "bg-[#4A7C59] border-[#4A7C59] text-white opacity-80 cursor-not-allowed"
                 : plan.recommended && !activePlanName

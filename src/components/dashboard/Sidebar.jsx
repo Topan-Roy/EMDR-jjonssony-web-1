@@ -1,12 +1,39 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { useStoredAuth } from "@/redux/authStorage";
 import { useLogoutMutation } from "@/redux/features/login";
+import { useGetProfileQuery } from "@/redux/features/profile";
+import { selectCurrentUser } from "@/redux/slices/authSlice";
+
+const getProfilePayload = (response) => response?.data ?? response ?? null;
+
+const getSubscriptionPlanName = (profile) =>
+  String(profile?.SubscriptionPlan || profile?.subscriptionPlan || "").trim();
+
+const hasHomeworkAccess = (profile) => {
+  const planName = getSubscriptionPlanName(profile).toLowerCase();
+
+  return Boolean(
+    planName &&
+    !planName.includes("free") &&
+    !planName.includes("no active"),
+  );
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { token } = useStoredAuth();
+  const authUser = useSelector(selectCurrentUser);
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
+  const { data, isFetching } = useGetProfileQuery(undefined, {
+    skip: !token,
+  });
+  const profile = getProfilePayload(data) || authUser;
+  const canUseHomework = hasHomeworkAccess(profile);
 
   const navItems = [
     { name: "My EMDR", href: "/dashboard" },
@@ -24,6 +51,17 @@ export default function Sidebar() {
     }
   };
 
+  const handleLockedHomeworkClick = (event) => {
+    event.preventDefault();
+
+    if (isFetching) {
+      toast("Checking your plan...");
+      return;
+    }
+
+    toast.error("Please buy a premium plan first to activate My Homework.");
+  };
+
   return (
     <div className="w-64 h-screen   text-white flex flex-col relative overflow-hidden border-r border-white/20">
       <div className="absolute inset-0 bg-[url('/sidebar-bg.png')] opacity-20 pointer-events-none mix-blend-overlay"></div>
@@ -39,6 +77,8 @@ export default function Sidebar() {
         </div>
         <nav className="space-y-2 flex-1">
           {navItems.map((item) => {
+            const isHomeworkItem = item.name.trim() === "My Homework";
+            const isHomeworkLocked = isHomeworkItem && !canUseHomework;
             const isActive =
               item.href === "/dashboard"
                 ? (pathname === "/dashboard" ||
@@ -53,10 +93,10 @@ export default function Sidebar() {
                   pathname.startsWith("/dashboard/assessments/activity") ||
                   pathname.startsWith("/dashboard/results")
                   : item.href === "/dashboard/homework"
-                    ? pathname.startsWith("/dashboard/homework") ||
+                    ? !isHomeworkLocked && (pathname.startsWith("/dashboard/homework") ||
                     pathname.startsWith("/dashboard/emotions") ||
                     pathname.startsWith("/dashboard/behaviours") ||
-                    pathname.startsWith("/dashboard/thoughts")
+                    pathname.startsWith("/dashboard/thoughts"))
                     : item.href === "/dashboard/resources"
                       ? pathname.startsWith("/dashboard/resources") && !pathname.startsWith("/dashboard/resources/bilateral")
                       : pathname.startsWith(item.href);
@@ -64,15 +104,19 @@ export default function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
+                onClick={isHomeworkLocked ? handleLockedHomeworkClick : undefined}
                 className={`flex items-center justify-between px-4 py-3 rounded-lg text-[16px] font-medium transition-colors ${isActive
                   ? "bg-[#4A7C59] text-[#FBFBFC] shadow-sm"
                   : "text-black bg-[#FBFBFC] hover:bg-[#6B9071]/50 hover:text-[#FBFBFC]"
                   }`}
               >
                 <span>{item.name}</span>
-                {item.name.trim() === "My Homework" && (
-                  <span className="bg-white text-[#4A7C59] text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm">
-                    Prime+
+                {isHomeworkItem && (
+                  <span className={`${canUseHomework
+                    ? "bg-white text-[#4A7C59]"
+                    : "bg-[#FFE6C9] text-[#8A4B00]"
+                    } text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm`}>
+                    {canUseHomework ? "Prime+" : "Locked"}
                   </span>
                 )}
               </Link>
