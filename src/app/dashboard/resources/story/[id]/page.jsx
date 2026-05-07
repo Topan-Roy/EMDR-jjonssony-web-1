@@ -168,22 +168,22 @@ export default function CalmPlaceDetailPage() {
                 </div>
 
                 <div className="space-y-4">
-                <div className="rounded-2xl border border-[#bfc8bb] bg-white/90 p-4 shadow-[0_8px_18px_rgba(53,90,67,0.12)]">
-                  <AudioPlayer
-                    title="Calm Place Audio"
-                    audioSrc={calmPlace.soundLink}
-                    isReplaceable={false}
-                  />
-                </div>
+                  <div className="rounded-2xl border border-[#bfc8bb] bg-white/90 p-4 shadow-[0_8px_18px_rgba(53,90,67,0.12)]">
+                    <AudioPlayer
+                      title="Calm Place Audio"
+                      audioSrc={calmPlace.soundLink}
+                      isReplaceable={false}
+                    />
+                  </div>
 
-                <div className="rounded-2xl border border-[#bfc8bb] bg-white/85 p-5 shadow-[0_8px_18px_rgba(53,90,67,0.12)]">
-                  <h2 className="font-serif text-xl text-[#2d2a26]">
-                    Description
-                  </h2>
-                  <p className="mt-3 whitespace-pre-line text-base leading-7 text-[#3e3a36]">
-                    {calmPlace.describe || "No description was added for this calm place."}
-                  </p>
-                </div>
+                  <div className="rounded-2xl border border-[#bfc8bb] bg-white/85 p-5 shadow-[0_8px_18px_rgba(53,90,67,0.12)]">
+                    <h2 className="font-serif text-xl text-[#2d2a26]">
+                      Description
+                    </h2>
+                    <p className="mt-3 whitespace-pre-line text-base leading-7 text-[#3e3a36]">
+                      {calmPlace.describe || "No description was added for this calm place."}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

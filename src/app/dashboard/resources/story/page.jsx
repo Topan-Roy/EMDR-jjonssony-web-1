@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useStoredAuth } from "@/redux/authStorage";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const getBaseUrl = () => {
   const rawBaseUrl =
@@ -86,6 +87,10 @@ export default function StoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   useEffect(() => {
     if (!hasHydrated) {
       return;
@@ -119,6 +124,13 @@ export default function StoryPage() {
     fetchCalmPlaces();
   }, [hasHydrated, token]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(calmPlaceItems.length / itemsPerPage);
+  const paginatedItems = calmPlaceItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
   return (
     <div className="min-h-screen rounded-2xl bg-white/50 p-1">
       <section className="relative overflow-hidden rounded-2xl border border-[#cfd4ca] bg-white/70 p-4 shadow-[0_18px_45px_rgba(41,37,36,0.14)] md:p-6">
@@ -141,27 +153,70 @@ export default function StoryPage() {
               No calm place entries found yet.
             </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {calmPlaceItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/dashboard/resources/story/${item.id}`}
-                  className="flex w-full items-center justify-between rounded-2xl border border-[#bfc8bb] bg-white/90 px-5 py-4 text-left shadow-[0_8px_18px_rgba(53,90,67,0.12)] transition-all hover:bg-white"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#9fbaa4]">
-                      <ItemIcon type={item.type} />
+            <>
+              <div className="mt-4 space-y-3">
+                {paginatedItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/dashboard/resources/story/${item.id}`}
+                    className="flex w-full items-center justify-between rounded-2xl border border-[#bfc8bb] bg-white/90 px-5 py-4 text-left shadow-[0_8px_18px_rgba(53,90,67,0.12)] transition-all hover:bg-white"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#9fbaa4]">
+                        <ItemIcon type={item.type} />
+                      </div>
+                      <span className="truncate font-serif text-lg text-[#2d2a26]">
+                        {item.title}
+                      </span>
                     </div>
-                    <span className="truncate font-serif text-lg text-[#2d2a26]">
-                      {item.title}
+                    <span className="ml-4 shrink-0 text-sm text-[#3e3a36]">
+                      {item.type}
                     </span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Pagination UI */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfc8bb] bg-white/80 text-[#355A43] shadow-sm transition-all hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`h-10 min-w-[40px] rounded-xl border px-3 text-sm font-medium transition-all shadow-sm ${
+                            currentPage === page
+                              ? "border-[#4A7C59] bg-[#4A7C59] text-white"
+                              : "border-[#bfc8bb] bg-white/80 text-[#3e3a36] hover:bg-white"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ),
+                    )}
                   </div>
-                  <span className="ml-4 shrink-0 text-sm text-[#3e3a36]">
-                    {item.type}
-                  </span>
-                </Link>
-              ))}
-            </div>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#bfc8bb] bg-white/80 text-[#355A43] shadow-sm transition-all hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
