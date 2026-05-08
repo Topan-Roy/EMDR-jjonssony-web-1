@@ -1,11 +1,26 @@
 "use client";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { useStoredAuth } from "@/redux/authStorage";
+import { useGetProfileQuery } from "@/redux/features/profile";
+import { selectCurrentUser } from "@/redux/slices/authSlice";
+import {
+  getProfilePayload,
+  hasPaidPlanAccess,
+} from "@/utils/subscriptionAccess";
 
 export default function CreateJourney() {
   const router = useRouter();
   const { token } = useStoredAuth();
+  const authUser = useSelector(selectCurrentUser);
+  const {
+    data: profileData,
+    isFetching: isFetchingProfile,
+    isLoading: isLoadingProfile,
+  } = useGetProfileQuery(undefined, {
+    skip: !token,
+  });
   const [journeyName, setJourneyName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
@@ -20,6 +35,9 @@ export default function CreateJourney() {
   const baseUrl = rawBaseUrl.endsWith("/")
     ? rawBaseUrl.slice(0, -1)
     : rawBaseUrl;
+  const profile = getProfilePayload(profileData) || authUser;
+  const isCheckingPlan = (isFetchingProfile || isLoadingProfile) && !profile;
+  const canCreateJourney = hasPaidPlanAccess(profile);
 
   useEffect(() => {
     const fetchJourneyImages = async () => {
@@ -106,6 +124,16 @@ export default function CreateJourney() {
 
     if (!token) {
       setSaveError("Please sign in again to save your journey.");
+      return;
+    }
+
+    if (isCheckingPlan) {
+      setSaveError("Checking your plan. Please try again in a moment.");
+      return;
+    }
+
+    if (!canCreateJourney) {
+      setSaveError("Please buy a premium plan first to create a journey.");
       return;
     }
 

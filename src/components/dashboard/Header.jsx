@@ -267,7 +267,7 @@ export default function Header() {
                         </div>
                         <div className="flex-1">
                           <p className="text-[13px] font-black text-stone-800">
-                            My Sanctum
+                            My Profile
                           </p>
                           <p className="text-[9px] font-bold text-stone-400 uppercase tracking-tighter italic">
                             Personal Workspace
