@@ -1045,7 +1045,7 @@ export default function EMDRCompanion() {
 
               <h3 className="mb-4 text-center text-lg font-semibold text-[#41594d]">
                 {currentInteraction.beliefType === "negative"
-                  ? "Select the negative belief(s) that resonate with you:"
+                  ? "Choose what this situation meant or means to you negatively:"
                   : "Select your preferred positive belief:"}
               </h3>
 

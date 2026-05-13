@@ -41,7 +41,7 @@ export const buildCbtFormulationNodes = (options = DEFAULT_OPTIONS) => {
           title: "Deep-Down Beliefs",
           description:
             "These are deep beliefs about yourself that might have been activated or try to think carefully about these and see if they match the current situation you chose.",
-          question: "Choose any beliefs that fit for you:",
+          question: "Choose what this situation meant or means to you negatively",
           type: "checkbox",
           options: mergedOptions.negativeBeliefs,
         },

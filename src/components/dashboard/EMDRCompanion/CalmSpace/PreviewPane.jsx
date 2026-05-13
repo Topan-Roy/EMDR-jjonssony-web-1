@@ -1,39 +1,56 @@
 import React from "react";
 import AudioPlayer from "./AudioPlayer";
 
-const PreviewPane = ({ description, backgroundUrl, audioTitle, audioSrc }) => {
-  return (
-    <div
-      className="bg-white/40 backdrop-blur-md rounded-[40px] p-10 shadow-2xl h-full flex flex-col relative overflow-hidden border border-white/40"
-      style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.7)), url(${
-          backgroundUrl ||
-          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&fit=crop"
-        })`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      <div className="relative z-10 flex flex-col h-full">
-        <h2 className="text-2xl font-serif mb-3 text-[#0F1912] tracking-tight">
-          Describe this place
-        </h2>
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&fit=crop&q=80";
 
-        <div className="mb-8">
+const PreviewPane = ({ description, backgroundUrl, audioTitle, audioSrc }) => {
+  const bg = backgroundUrl || FALLBACK_IMAGE;
+
+  return (
+    <div className="rounded-[40px] shadow-2xl h-full flex flex-col relative overflow-hidden border border-white/30">
+      {/* Background image — clearly visible */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${bg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Light overlay — just enough to read text */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/50" />
+
+      <div className="relative z-10 flex flex-col h-full p-8">
+        {/* Title */}
+        <h2 className="text-2xl font-serif mb-1 text-white tracking-tight drop-shadow">
+          Your Calm Space
+        </h2>
+        <p className="text-white/70 text-sm mb-6 font-sans">Preview</p>
+
+        {/* Description */}
+        {description ? (
+          <div className="flex-1 flex items-center">
+            <p className="text-white/90 text-base leading-relaxed font-serif italic drop-shadow-sm">
+              &ldquo;{description}&rdquo;
+            </p>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-white/40 text-sm font-sans italic text-center">
+              Describe your calm place to see it here...
+            </p>
+          </div>
+        )}
+
+        {/* Audio player at bottom */}
+        <div className="mt-6">
           <AudioPlayer
-            title={audioTitle || "Select a sound"}
+            title={audioTitle || "No sound selected"}
             audioSrc={audioSrc}
             isReplaceable={false}
           />
         </div>
-
-        <div className="mt-8 flex justify-end">
-          {/* Decorative element or secondary player if needed */}
-        </div>
       </div>
-
-      {/* Soft gradient overlay at bottom */}
-      <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/30 to-transparent pointer-events-none" />
     </div>
   );
 };

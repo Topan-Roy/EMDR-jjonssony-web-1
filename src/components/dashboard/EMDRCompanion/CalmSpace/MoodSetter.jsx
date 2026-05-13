@@ -8,62 +8,37 @@ const MOOD_SOUND_CATEGORY_NAME = "visual-sounds";
 const getMoodSounds = async (token) => {
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || process.env.VITE_BASE_URL || "";
-  const baseUrl = rawBaseUrl.endsWith("/")
-    ? rawBaseUrl.slice(0, -1)
-    : rawBaseUrl;
+  const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
-  if (!baseUrl) {
-    throw new Error("Media service is not configured.");
-  }
-
-  if (!token) {
-    throw new Error("Please sign in again to load sounds.");
-  }
+  if (!baseUrl) throw new Error("Media service is not configured.");
+  if (!token) throw new Error("Please sign in again to load sounds.");
 
   const categoriesResponse = await fetch(`${baseUrl}/api/categories`, {
     cache: "no-store",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { Authorization: `Bearer ${token}` },
   });
   const categoriesResult = await categoriesResponse.json();
 
   if (!categoriesResponse.ok || !categoriesResult?.success) {
-    throw new Error(
-      categoriesResult?.message || "Failed to fetch sound categories."
-    );
+    throw new Error(categoriesResult?.message || "Failed to fetch sound categories.");
   }
 
   const soundCategory = (categoriesResult?.data || []).find((category) => {
-    const normalizedCategoryName =
-      category?.categoryName?.trim()?.toLowerCase() || "";
-    const normalizedCategorySlug = category?.slug?.trim()?.toLowerCase() || "";
-
-    return (
-      normalizedCategoryName === MOOD_SOUND_CATEGORY_NAME ||
-      normalizedCategorySlug === MOOD_SOUND_CATEGORY_NAME
-    );
+    const name = category?.categoryName?.trim()?.toLowerCase() || "";
+    const slug = category?.slug?.trim()?.toLowerCase() || "";
+    return name === MOOD_SOUND_CATEGORY_NAME || slug === MOOD_SOUND_CATEGORY_NAME;
   });
 
-  if (!soundCategory?._id) {
-    throw new Error("Visual-sounds category was not found.");
-  }
+  if (!soundCategory?._id) throw new Error("Visual-sounds category was not found.");
 
   const categoryMediaResponse = await fetch(
     `${baseUrl}/api/categories/${soundCategory._id}/media`,
-    {
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { cache: "no-store", headers: { Authorization: `Bearer ${token}` } }
   );
   const categoryMediaResult = await categoryMediaResponse.json();
 
   if (!categoryMediaResponse.ok || !categoryMediaResult?.success) {
-    throw new Error(
-      categoryMediaResult?.message || "Failed to fetch category sounds."
-    );
+    throw new Error(categoryMediaResult?.message || "Failed to fetch category sounds.");
   }
 
   return (categoryMediaResult?.data?.media?.musics || []).map((item, index) => ({
@@ -76,31 +51,18 @@ const getMoodSounds = async (token) => {
   }));
 };
 
-const MoodSetter = ({
-  selectedSound,
-  onSelectSound,
-  onUploadSound,
-}) => {
+const MoodSetter = ({ selectedSound, onSelectSound, onUploadSound }) => {
   const { token } = useStoredAuth();
   const [showSelector, setShowSelector] = useState(false);
   const [sounds, setSounds] = useState([]);
   const [isLoadingSounds, setIsLoadingSounds] = useState(true);
   const [soundError, setSoundError] = useState("");
+
   const syncSelectedSound = useEffectEvent((items) => {
-    if (!items.length || selectedSound?.source === "upload") {
-      return;
-    }
-
-    if (!selectedSound?.id) {
-      onSelectSound(items[0]);
-      return;
-    }
-
-    const matchedSound = items.find((item) => item.id === selectedSound.id);
-
-    if (!matchedSound) {
-      onSelectSound(items[0]);
-    }
+    if (!items.length || selectedSound?.source === "upload") return;
+    if (!selectedSound?.id) { onSelectSound(items[0]); return; }
+    const matched = items.find((item) => item.id === selectedSound.id);
+    if (!matched) onSelectSound(items[0]);
   });
 
   useEffect(() => {
@@ -108,7 +70,6 @@ const MoodSetter = ({
       try {
         setIsLoadingSounds(true);
         setSoundError("");
-
         const items = await getMoodSounds(token);
         setSounds(items);
         syncSelectedSound(items);
@@ -120,29 +81,13 @@ const MoodSetter = ({
         setIsLoadingSounds(false);
       }
     };
-
     fetchSounds();
   }, [token]);
 
-  const handleOpenSelector = () => {
-    setShowSelector(true);
-  };
-
-  const handleCloseSelector = () => {
-    setShowSelector(false);
-  };
-
   const handleUploadChange = (event) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    if (onUploadSound) {
-      onUploadSound(file);
-    }
-
+    if (!file) return;
+    if (onUploadSound) onUploadSound(file);
     event.target.value = "";
   };
 
@@ -167,7 +112,7 @@ const MoodSetter = ({
               title={selectedSound.title}
               audioSrc={selectedSound.url}
               isReplaceable={true}
-              onReplace={handleOpenSelector}
+              onReplace={() => setShowSelector(true)}
             />
           </div>
         ) : (
@@ -175,18 +120,14 @@ const MoodSetter = ({
             No Visual-sounds audio found.
           </div>
         )}
-        {!isLoadingSounds ? (
+        {!isLoadingSounds && (
           <label className="mt-3 flex cursor-pointer items-center justify-center rounded-2xl border border-dashed border-[#1E3224]/30 bg-white/60 px-4 py-3 text-sm font-medium text-[#0F1912] transition-colors hover:bg-white/80">
             Upload custom sound
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleUploadChange}
-              className="hidden"
-            />
+            <input type="file" accept="audio/*" onChange={handleUploadChange} className="hidden" />
           </label>
-        ) : null}
+        )}
       </div>
+
       <MoodSelector
         isOpen={showSelector}
         sounds={sounds}
@@ -194,7 +135,7 @@ const MoodSetter = ({
         error={soundError}
         selectedSoundId={selectedSound?.id}
         onSelectSound={onSelectSound}
-        onClose={handleCloseSelector}
+        onClose={() => setShowSelector(false)}
       />
     </>
   );
