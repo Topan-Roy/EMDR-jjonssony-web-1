@@ -103,14 +103,11 @@ const patchCbtFormulation = async ({ baseUrl, token, formulationId, payload }) =
 
 const buildEditableAnswers = (entry) => {
   const savedAnswers = buildAnswersFromCbtFormulationEntry(entry);
-
+  // Reset completed so nodes appear one-by-one, but keep answer data pre-filled
   return Object.fromEntries(
     Object.entries(savedAnswers).map(([key, value]) => [
       key,
-      {
-        ...value,
-        completed: false,
-      },
+      { ...value, completed: false },
     ]),
   );
 };
@@ -142,14 +139,12 @@ export default function CBTFormulation() {
   const baseUrl = getBaseUrl();
 
   const formulationNodes = buildCbtFormulationNodes(cbtOptions);
-
   const timelineNodes = formulationNodes.timeline;
   const reactNodes = formulationNodes.react;
+  const formulationSteps = flattenCbtFormulationNodes(formulationNodes);
 
   const getNodeById = (nodeId) =>
-    flattenCbtFormulationNodes(formulationNodes).find(
-      (node) => node.id === nodeId,
-    );
+    formulationSteps.find((node) => node.id === nodeId);
 
   const getCurrentNodeIndex = () =>
     timelineNodes.findIndex((node) => !answers[node.id]?.completed);
@@ -219,7 +214,7 @@ export default function CBTFormulation() {
     };
 
     loadOptions();
-  }, [baseUrl, hasHydrated, token]);
+  }, [baseUrl, hasHydrated, router, token]);
 
   useEffect(() => {
     if (!hasHydrated || !baseUrl || !token) {
@@ -333,10 +328,10 @@ export default function CBTFormulation() {
       if (currentNodeRef.current) {
         currentNodeRef.current.scrollIntoView({
           behavior: "smooth",
-          block: "start",
+          block: "center",
         });
       }
-    }, 100);
+    }, 520);
   };
 
   const handleSkip = () => {
@@ -357,10 +352,10 @@ export default function CBTFormulation() {
       if (currentNodeRef.current) {
         currentNodeRef.current.scrollIntoView({
           behavior: "smooth",
-          block: "start",
+          block: "center",
         });
       }
-    }, 100);
+    }, 520);
   };
 
   const toggleBelief = (belief) => {
@@ -400,11 +395,22 @@ export default function CBTFormulation() {
       setIsSubmitting(true);
       setSubmitError("");
 
-      const result = await postCbtFormulation({
-        baseUrl,
-        token,
-        payload,
-      });
+      let result;
+      if (currentFormulationId) {
+        try {
+          result = await patchCbtFormulation({
+            baseUrl,
+            token,
+            formulationId: currentFormulationId,
+            payload,
+          });
+        } catch (patchError) {
+          console.warn("PATCH failed, falling back to POST:", patchError?.message);
+          result = await postCbtFormulation({ baseUrl, token, payload });
+        }
+      } else {
+        result = await postCbtFormulation({ baseUrl, token, payload });
+      }
 
       setCurrentFormulationId(result?.data?._id || currentFormulationId);
 
@@ -421,6 +427,7 @@ export default function CBTFormulation() {
       router.push("/dashboard/EMDRCompanion/session/next/calm-space");
     } catch (error) {
       console.error("Error saving CBT formulation:", error);
+      console.error("Payload was:", JSON.stringify(payload, null, 2));
       setSubmitError(
         error?.message || "Unable to save your CBT formulation right now.",
       );
@@ -457,13 +464,13 @@ export default function CBTFormulation() {
               >
                 <h2 className="text-2xl font-serif text-[#0F1912] mb-4">Before we begin</h2>
                 <p className="text-stone-700 text-[16px] leading-relaxed mb-4">
-                  Before the processing work begins, we'd like to build up a picture of you; where you've come from, how you tend to think and feel, and what life has been like up until now.
+                  Before the processing work begins, we&apos;d like to build up a picture of you; where you&apos;ve come from, how you tend to think and feel, and what life has been like up until now.
                 </p>
                 <p className="text-stone-700 text-[16px] leading-relaxed mb-4">
-                  This is called a formulation. Think of it as a map that helps make sense of why certain experiences affect you the way they do and that this is connected to the research. You'll be asked about things like early memories, beliefs you hold about yourself, and how you tend to respond when things get difficult.
+                  This is called a formulation. Think of it as a map that helps make sense of why certain experiences affect you the way they do and that this is connected to the research. You&apos;ll be asked about things like early memories, beliefs you hold about yourself, and how you tend to respond when things get difficult.
                 </p>
                 <p className="text-stone-700 text-[16px] leading-relaxed">
-                  Take your time with it, and don't worry about getting it "right." Honest and approximate is more useful than precise and uncomfortable. The information you fill in here will be used throughout the programme to tailor the work to you. We will start with the here and now.
+                  Take your time with it, and don&apos;t worry about getting it &quot;right.&quot; Honest and approximate is more useful than precise and uncomfortable. The information you fill in here will be used throughout the programme to tailor the work to you. We will start with the here and now.
                 </p>
               </motion.div>
             )}
@@ -476,22 +483,25 @@ export default function CBTFormulation() {
           ) : null}
 
           <AnimatePresence mode="wait">
-            {timelineNodes.map((node, index) => {
-              const isCurrent = index === currentNodeIndex;
-
-              if (!isCurrent || allTimelineComplete) {
-                return null;
-              }
-
+            {!allTimelineComplete && currentNodeIndex >= 0 && (() => {
+              const node = timelineNodes[currentNodeIndex];
               return (
                 <motion.div
                   key={node.id}
-                  ref={isCurrent ? currentNodeRef : null}
-                  initial={{ opacity: 0, y: 100 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -100 }}
-                  transition={{ duration: 0.6, ease: "easeInOut" }}
-                  className="relative mb-6"
+                  ref={currentNodeRef}
+                  initial={{ opacity: 0, y: 80, scale: 0.97 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: [0.97, 1.03, 0.98, 1.01, 1],
+                  }}
+                  exit={{ opacity: 0, y: -80, scale: 0.97 }}
+                  transition={{
+                    opacity: { duration: 0.4, ease: "easeOut" },
+                    y: { duration: 0.45, ease: "easeInOut" },
+                    scale: { duration: 0.5, ease: "easeOut", delay: 0.35 },
+                  }}
+                  className="relative mb-10"
                 >
                   <div className="mb-4 mt-6 text-center">
                     <h2 className="text-xl font-serif text-[#0F1912]">
@@ -505,7 +515,7 @@ export default function CBTFormulation() {
                       onClick={() => handleOpenModal(node.id)}
                       className="relative transition-all duration-300 hover:scale-105"
                     >
-                      <div className="rounded-3xl border-4 border-[#4A7C59] bg-white px-16 py-8 text-center text-xl text-[#0F1912] shadow-2xl transition-all duration-500 backdrop-blur-sm">
+                      <div className="rounded-3xl border-4 border-[#4A7C59] bg-white px-16 py-8 text-center text-xl text-[#0F1912] shadow-2xl backdrop-blur-sm">
                         <h3 className="mb-2 text-3xl font-serif text-stone-900">
                           {node.title}
                         </h3>
@@ -517,7 +527,7 @@ export default function CBTFormulation() {
                   </div>
                 </motion.div>
               );
-            })}
+            })()}
           </AnimatePresence>
 
           {showReactSection && (
@@ -526,23 +536,23 @@ export default function CBTFormulation() {
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, ease: "easeOut" }}
-              className="mt-16 min-h-screen pb-16"
+              className="mt-10 pb-10"
             >
-              <div className="mb-8 flex justify-center">
-                <div className="h-20 w-0.5 bg-[#4A7C59]" />
+              <div className="mb-5 flex justify-center">
+                <div className="h-12 w-0.5 bg-[#4A7C59]" />
               </div>
 
-              <div className="mb-20 text-center">
+              <div className="mb-8 text-center">
                 <h2 className="text-3xl font-serif text-stone-900">
                   How I React
                 </h2>
               </div>
 
-              <div className="relative mx-auto mb-16 mt-8 min-h-[620px] w-full max-w-2xl rounded-2xl px-6 py-8 md:min-h-[700px] md:px-10 md:py-10">
+              <div className="relative mx-auto mb-10 mt-6 min-h-[430px] w-full max-w-xl rounded-2xl px-4 py-4 md:min-h-[500px] md:px-8 md:py-6">
                 <svg
                   className="pointer-events-none absolute inset-0 z-0 h-full w-full"
                   viewBox="0 0 100 100"
-                  preserveAspectRatio="none"
+                  preserveAspectRatio="xMidYMid meet"
                 >
                   <defs>
                     <marker
@@ -561,11 +571,12 @@ export default function CBTFormulation() {
                     {answers.thoughts?.completed && (
                       <motion.path
                         key="path-thoughts"
-                        d="M50 20 Q42 38 24 72"
+                        d="M50 21 C34 27 24 45 25 66"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
                         stroke="#4A7C59"
                         strokeWidth="3"
+                        strokeLinecap="round"
                         markerEnd="url(#arrowhead-responsive)"
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
@@ -576,11 +587,12 @@ export default function CBTFormulation() {
                     {answers.feelings?.completed && (
                       <motion.path
                         key="path-feelings"
-                        d="M24 72 Q50 88 76 72"
+                        d="M29 77 C41 90 59 90 71 77"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
                         stroke="#4A7C59"
                         strokeWidth="3"
+                        strokeLinecap="round"
                         markerEnd="url(#arrowhead-responsive)"
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
@@ -591,11 +603,12 @@ export default function CBTFormulation() {
                     {answers.behaviors?.completed && (
                       <motion.path
                         key="path-behaviors"
-                        d="M76 72 Q58 38 50 20"
+                        d="M75 66 C76 45 66 27 50 21"
                         vectorEffect="non-scaling-stroke"
                         fill="transparent"
                         stroke="#4A7C59"
                         strokeWidth="3"
+                        strokeLinecap="round"
                         markerEnd="url(#arrowhead-responsive)"
                         initial={{ pathLength: 0, opacity: 0 }}
                         animate={{ pathLength: 1, opacity: 1 }}
@@ -609,12 +622,12 @@ export default function CBTFormulation() {
                   </AnimatePresence>
                 </svg>
 
-                <div className="absolute left-1/2 top-0 z-20 flex w-[90%] -translate-x-1/2 justify-center md:w-auto">
+                <div className="absolute left-1/2 top-0 z-20 flex w-[58%] max-w-[220px] -translate-x-1/2 justify-center md:w-[220px]">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.96, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.75, ease: "easeOut" }}
-                    className="w-full max-w-[280px]"
+                    className="w-full"
                   >
                     <button
                       type="button"
@@ -623,12 +636,12 @@ export default function CBTFormulation() {
                     >
                       <motion.div
                         layout
-                        className="flex aspect-[3/2] w-full flex-col items-center justify-center rounded-3xl border-4 border-[#4A7C59] bg-white p-5 text-center shadow-xl transition-all duration-500"
+                        className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-[#4A7C59] bg-white p-4 text-center shadow-xl transition-all duration-500"
                       >
-                        <h3 className="mb-1 text-2xl font-serif text-stone-900 md:mb-2 md:text-3xl">
+                        <h3 className="mb-1 text-xl font-serif text-stone-900 md:mb-2 md:text-2xl">
                           Thoughts
                         </h3>
-                        <p className="text-sm italic text-stone-600 md:text-lg">
+                        <p className="text-sm italic text-stone-600 md:text-base">
                           In my head
                         </p>
                       </motion.div>
@@ -636,7 +649,7 @@ export default function CBTFormulation() {
                   </motion.div>
                 </div>
 
-                <div className="absolute bottom-24 left-0 z-20 flex w-[45%] justify-start pl-2 md:pl-4">
+                <div className="absolute bottom-3 left-0 z-20 flex w-[45%] max-w-[205px] justify-start pl-1 md:bottom-4 md:pl-3">
                   <AnimatePresence>
                     {answers.thoughts?.completed && (
                       <motion.div
@@ -649,18 +662,18 @@ export default function CBTFormulation() {
                           delay: 0.4,
                           ease: "easeOut",
                         }}
-                        className="w-full max-w-[280px]"
+                        className="w-full"
                       >
                         <button
                           type="button"
                           onClick={() => handleOpenModal("feelings")}
                           className="relative z-10 w-full transition-all duration-300 hover:scale-105"
                         >
-                          <div className="flex aspect-[3/2] w-full flex-col items-center justify-center rounded-3xl border-4 border-[#4A7C59] bg-white px-3 py-10 text-center shadow-xl transition-all duration-500">
-                            <h3 className="mb-1 text-2xl font-serif text-stone-900 md:mb-2 md:text-3xl">
+                          <div className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-[#4A7C59] bg-white p-4 text-center shadow-xl transition-all duration-500">
+                            <h3 className="mb-1 text-xl font-serif text-stone-900 md:mb-2 md:text-2xl">
                               Feelings
                             </h3>
-                            <p className="text-sm italic text-stone-600 md:text-lg">
+                            <p className="text-sm italic text-stone-600 md:text-base">
                               In my body
                             </p>
                           </div>
@@ -670,7 +683,7 @@ export default function CBTFormulation() {
                   </AnimatePresence>
                 </div>
 
-                <div className="absolute bottom-24 right-0 z-30 flex w-[45%] justify-end pr-2 md:pr-4">
+                <div className="absolute bottom-3 right-0 z-30 flex w-[45%] max-w-[205px] justify-end pr-1 md:bottom-4 md:pr-3">
                   <AnimatePresence>
                     {answers.feelings?.completed && (
                       <motion.div
@@ -683,18 +696,18 @@ export default function CBTFormulation() {
                           delay: 0.4,
                           ease: "easeOut",
                         }}
-                        className="w-full max-w-[280px]"
+                        className="w-full"
                       >
                         <button
                           type="button"
                           onClick={() => handleOpenModal("behaviors")}
                           className="relative z-10 w-full transition-all duration-300 hover:scale-105"
                         >
-                          <div className="flex aspect-[3/2] w-full flex-col items-center justify-center rounded-3xl border-4 border-[#4A7C59] bg-white px-3 py-10 text-center shadow-xl transition-all duration-500">
-                            <h3 className="mb-1 text-2xl font-serif text-stone-900 md:mb-2 md:text-3xl">
+                          <div className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-[#4A7C59] bg-white p-4 text-center shadow-xl transition-all duration-500">
+                            <h3 className="mb-1 text-xl font-serif text-stone-900 md:mb-2 md:text-2xl">
                               Behaviors
                             </h3>
-                            <p className="text-sm italic text-stone-600 md:text-lg">
+                            <p className="text-sm italic text-stone-600 md:text-base">
                               What I did
                             </p>
                           </div>
@@ -708,7 +721,7 @@ export default function CBTFormulation() {
               {answers.behaviors?.completed && (
                 <div
                   ref={consequencesRef}
-                  className="flex min-h-screen flex-col items-center justify-center px-8 py-20"
+                  className="flex min-h-[360px] flex-col items-center justify-start px-6 py-10"
                 >
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -742,7 +755,7 @@ export default function CBTFormulation() {
               {answers.consequences?.completed && (
                 <div
                   ref={superpowersRef}
-                  className="flex min-h-screen flex-col items-center justify-center px-8 py-20"
+                  className="flex min-h-[420px] flex-col items-center justify-start px-6 py-10"
                 >
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -770,32 +783,32 @@ export default function CBTFormulation() {
                       </div>
                     </button>
                   </motion.div>
-
-                  {submitError ? (
-                    <div className="mt-8 w-full max-w-lg rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
-                      {submitError}
-                    </div>
-                  ) : null}
-
-                  {allCompleted && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="mt-20"
-                    >
-                      <button
-                        type="button"
-                        onClick={handleCompleteJourney}
-                        disabled={isSubmitting}
-                        className="flex items-center gap-3 rounded-2xl bg-[#4A7C59] px-4 py-6 font-serif text-2xl text-white shadow-2xl transition-all hover:bg-[#3d6649] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isSubmitting ? "Saving..." : "Complete Journey"}
-                      </button>
-                    </motion.div>
-                  )}
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {submitError ? (
+            <div className="mx-auto mt-8 w-full max-w-lg rounded-2xl bg-red-50 px-5 py-4 text-sm text-red-600">
+              {submitError}
+            </div>
+          ) : null}
+
+          {allCompleted && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="mt-12 flex justify-center"
+            >
+              <button
+                type="button"
+                onClick={handleCompleteJourney}
+                disabled={isSubmitting}
+                className="flex items-center gap-3 rounded-2xl bg-[#4A7C59] px-4 py-6 font-serif text-2xl text-white shadow-2xl transition-all hover:bg-[#3d6649] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? "Saving..." : "Complete Journey"}
+              </button>
             </motion.div>
           )}
         </div>

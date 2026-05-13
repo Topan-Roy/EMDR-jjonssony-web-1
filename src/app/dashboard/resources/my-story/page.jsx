@@ -245,7 +245,7 @@ export default function MyStoryPage() {
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.85, ease: "easeOut" }}
-                className="mt-16 min-h-screen pb-16"
+                className="mt-10 pb-10"
               >
                 <div className="mb-8 flex justify-center">
                   <div className="h-20 w-0.5 bg-[#4A7C59]" />
@@ -257,11 +257,11 @@ export default function MyStoryPage() {
                   </h2>
                 </div>
 
-                <div className="relative mx-auto mb-16 mt-8 min-h-[620px] w-full max-w-2xl rounded-2xl px-6 py-8 md:min-h-[700px] md:px-10 md:py-10">
+                <div className="relative mx-auto mb-16 mt-8 min-h-[380px] w-full max-w-2xl rounded-2xl px-6 py-8 md:min-h-[420px] md:px-10 md:py-10">
                   <svg
                     className="pointer-events-none absolute inset-0 z-0 h-full w-full"
                     viewBox="0 0 100 100"
-                    preserveAspectRatio="none"
+                    preserveAspectRatio="xMidYMid meet"
                   >
                     <defs>
                       <marker
@@ -315,8 +315,8 @@ export default function MyStoryPage() {
                     const entryValues = getCbtFormulationEntryValues(entry, node.id);
                     const positions = [
                       "absolute left-1/2 top-0 z-20 flex w-[90%] -translate-x-1/2 justify-center md:w-auto",
-                      "absolute bottom-24 left-0 z-20 flex w-[45%] justify-start pl-2 md:pl-4",
-                      "absolute bottom-24 right-0 z-30 flex w-[45%] justify-end pr-2 md:pr-4",
+                      "absolute bottom-8 left-0 z-20 flex w-[45%] justify-start pl-2 md:pl-4",
+                      "absolute bottom-8 right-0 z-30 flex w-[45%] justify-end pr-2 md:pr-4",
                     ];
 
                     return (
@@ -362,7 +362,7 @@ export default function MyStoryPage() {
                     <div
                       key={nodeId}
                       ref={index === 0 ? consequencesRef : superpowersRef}
-                      className="flex min-h-screen flex-col items-center justify-center px-8 py-20"
+                      className="flex flex-col items-center justify-center px-8 py-10"
                     >
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
