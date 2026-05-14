@@ -20,15 +20,15 @@ const postBilateralSettings = async ({ baseUrl, token, payload }) => {
 };
 
 const speeds = [
-  { id: "slow",   name: "Slow",   desc: "850ms", icon: "🐢" },
+  { id: "slow", name: "Slow", desc: "850ms", icon: "🐢" },
   { id: "medium", name: "Medium", desc: "600ms", icon: "🍃" },
-  { id: "fast",   name: "Fast",   desc: "400ms", icon: "⚡" },
+  { id: "fast", name: "Fast", desc: "400ms", icon: "⚡" },
 ];
 
 const directions = [
-  { id: "horizontal",    name: "Horizontal",    Icon: MoveHorizontal },
-  { id: "vertical",      name: "Vertical",      Icon: MoveVertical },
-  { id: "diagonal-up",   name: "Diagonal Up",   Icon: MoveUpRight },
+  { id: "horizontal", name: "Horizontal", Icon: MoveHorizontal },
+  { id: "vertical", name: "Vertical", Icon: MoveVertical },
+  { id: "diagonal-up", name: "Diagonal Up", Icon: MoveUpRight },
   { id: "diagonal-down", name: "Diagonal Down", Icon: MoveDownRight },
 ];
 
@@ -127,7 +127,7 @@ export default function BilateralSettingsPage() {
     const activeJourneyId = localStorage.getItem("activeJourneyId");
     if (activeJourneyId && token && baseUrl) {
       try {
-        await Promise.all([6,7,8,9,10].map((n) => updateSessionProgress({ baseUrl, token, journeyId: activeJourneyId, compledSession: n })));
+        await Promise.all([6, 7, 8, 9, 10].map((n) => updateSessionProgress({ baseUrl, token, journeyId: activeJourneyId, compledSession: n })));
       } catch (e) { console.error(e); }
     }
     const params = new URLSearchParams(selections);
@@ -136,28 +136,12 @@ export default function BilateralSettingsPage() {
 
   return (
     <div className="min-h-screen relative font-serif">
-      <style>{`
-        .bilateral-title {
-          background: linear-gradient(270deg, #5a5550, #7a9a6a, #5a756d, #9a8a6a, #5a5550);
-          background-size: 300% 300%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradientShift 5s ease infinite;
-        }
-        @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-      `}</style>
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm pointer-events-none rounded-2xl" />
-
       <div className="relative z-10 py-8 px-4 w-full">
         {/* Header */}
         <div className="text-center mb-10">
           <p className="text-xs tracking-[3px] uppercase text-stone-500 mb-2">The UK InKind Psychology Clinic</p>
-          <h1 className="text-4xl font-serif mb-2 italic bilateral-title">
+          <h1 className="text-4xl font-serif mb-2 italic text-[#0F1912]">
             Bilateral Stimulation
           </h1>
           <p className="text-base text-[#7A7A7A] italic">Customise your calming experience</p>
@@ -177,11 +161,10 @@ export default function BilateralSettingsPage() {
                   <div
                     key={env.id}
                     onClick={() => updateSelection("environment", env.id)}
-                    className={`relative aspect-[16/11] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-                      selections.environment === env.id
+                    className={`relative aspect-[16/11] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${selections.environment === env.id
                         ? "ring-2 ring-[#7a9a6a] shadow-md"
                         : "opacity-80 hover:opacity-100"
-                    }`}
+                      }`}
                   >
                     <img src={env.image} alt={env.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-x-0 bottom-0 py-2 px-1 bg-gradient-to-t from-black/60 to-transparent text-center">
@@ -213,11 +196,10 @@ export default function BilateralSettingsPage() {
                     <div
                       key={item.id}
                       onClick={() => updateSelection("icon", item.id)}
-                      className={`aspect-square rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 p-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                        selections.icon === item.id
+                      className={`aspect-square rounded-xl cursor-pointer flex flex-col items-center justify-center gap-2 p-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${selections.icon === item.id
                           ? "border-2 border-[#7a9a6a] bg-gradient-to-br from-[#7a9a6a]/12 to-[#6a8a5a]/18"
                           : "border-2 border-stone-200/80 bg-white/70 hover:bg-white/90"
-                      }`}
+                        }`}
                     >
                       <img src={item.img} alt={item.name} className="w-10 h-10 object-contain" />
                       <span className="text-xs text-stone-600 text-center leading-tight">{item.name}</span>
@@ -240,11 +222,10 @@ export default function BilateralSettingsPage() {
                     <div
                       key={item.id}
                       onClick={() => updateSelection("sound", item.id)}
-                      className={`rounded-xl cursor-pointer flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${
-                        selections.sound === item.id
+                      className={`rounded-xl cursor-pointer flex items-center gap-3 px-4 py-3.5 transition-all duration-200 ${selections.sound === item.id
                           ? "border-2 border-[#7a9a6a] bg-gradient-to-br from-[#7a9a6a]/12 to-[#6a8a5a]/18"
                           : "border-2 border-stone-200/80 bg-white/70 hover:bg-white/90"
-                      }`}
+                        }`}
                     >
                       <Music className={`w-4 h-4 flex-shrink-0 ${selections.sound === item.id ? "text-[#7a9a6a]" : "text-stone-400"}`} />
                       <span className="text-sm text-stone-700 leading-tight">{item.name}</span>
@@ -265,11 +246,10 @@ export default function BilateralSettingsPage() {
                   <div
                     key={item.id}
                     onClick={() => updateSelection("speed", item.id)}
-                    className={`flex-1 rounded-xl cursor-pointer text-center py-5 px-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                      selections.speed === item.id
+                    className={`flex-1 rounded-xl cursor-pointer text-center py-5 px-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${selections.speed === item.id
                         ? "border-2 border-[#7a9a6a] bg-gradient-to-br from-[#7a9a6a]/15 to-[#6a8a5a]/22 shadow-sm"
                         : "border-2 border-stone-200/80 bg-white/75 hover:bg-white/95"
-                    }`}
+                      }`}
                   >
                     <div className="text-3xl mb-2">{item.icon}</div>
                     <div className={`text-sm italic mb-1 ${selections.speed === item.id ? "text-[#5a7a4a] font-semibold" : "text-stone-600"}`}>{item.name}</div>
@@ -287,11 +267,10 @@ export default function BilateralSettingsPage() {
                   <div
                     key={id}
                     onClick={() => updateSelection("direction", id)}
-                    className={`rounded-xl cursor-pointer text-center py-5 px-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                      selections.direction === id
+                    className={`rounded-xl cursor-pointer text-center py-5 px-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${selections.direction === id
                         ? "border-2 border-[#7a9a6a] bg-gradient-to-br from-[#7a9a6a]/15 to-[#6a8a5a]/22 shadow-sm"
                         : "border-2 border-stone-200/80 bg-white/75 hover:bg-white/95"
-                    }`}
+                      }`}
                   >
                     <Icon className={`w-7 h-7 mx-auto mb-2 ${selections.direction === id ? "text-[#7a9a6a]" : "text-stone-400"}`} />
                     <div className={`text-xs italic leading-tight ${selections.direction === id ? "text-[#5a7a4a] font-semibold" : "text-stone-600"}`}>{name}</div>

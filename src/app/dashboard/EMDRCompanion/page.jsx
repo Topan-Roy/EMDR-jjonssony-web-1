@@ -592,7 +592,7 @@ export default function EMDRCompanion() {
       console.error("Error completing EMDR session:", error);
       setSessionError(
         error?.message ||
-          "Your summary was saved locally, but we could not complete the session online."
+        "Your summary was saved locally, but we could not complete the session online."
       );
     } finally {
       setIsSyncingSession(false);
@@ -953,7 +953,7 @@ export default function EMDRCompanion() {
   return (
     <div className=" rounded-[1em] bg-[#f6f7f4] p-6 shadow-[0_10px_25px_rgba(0,0,0,0.06)] md:mt-10 md:p-10">
       <h2 className="mb-3 text-center text-[28px] text-[#3e4e44]">
-        Meet Your EMDR Companion
+        Sigmond
       </h2>
       <p className="mb-6 text-[18px] leading-7 text-[#2d2d2d]">
         I&apos;m here to gently guide you through preparing for your first EMDR
@@ -1028,11 +1028,10 @@ export default function EMDRCompanion() {
                   <button
                     type="button"
                     onClick={() => setSelectedBeliefs([suggestedPositiveBelief])}
-                    className={`w-full rounded-md border-2 p-4 text-center text-base font-medium ${
-                      selectedBeliefs[0] === suggestedPositiveBelief
+                    className={`w-full rounded-md border-2 p-4 text-center text-base font-medium ${selectedBeliefs[0] === suggestedPositiveBelief
                         ? "border-[#41594d] bg-[#41594d] text-white"
                         : "border-[#d4b896] bg-white text-[#2d2d2d]"
-                    }`}
+                      }`}
                   >
                     &quot;{suggestedPositiveBelief}&quot;
                   </button>
@@ -1076,20 +1075,19 @@ export default function EMDRCompanion() {
                                   if (currentInteraction.beliefType === "negative") {
                                     return currentBeliefs.includes(belief)
                                       ? currentBeliefs.filter(
-                                          (currentBelief) =>
-                                            currentBelief !== belief
-                                        )
+                                        (currentBelief) =>
+                                          currentBelief !== belief
+                                      )
                                       : [...currentBeliefs, belief];
                                   }
 
                                   return [belief];
                                 })
                               }
-                              className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-all ${
-                                isSelected
+                              className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-all ${isSelected
                                   ? "border-[#41594d] bg-[#41594d] text-white"
                                   : "border-[#e0e3dd] bg-white text-[#2d2d2d] hover:border-[#41594d] hover:bg-[#e8ebe6]"
-                              }`}
+                                }`}
                             >
                               {belief}
                             </button>
@@ -1171,11 +1169,10 @@ export default function EMDRCompanion() {
                     type="button"
                     onClick={() => setSelectedRating(value)}
                     disabled={isSyncingSession}
-                    className={`flex h-[50px] w-[50px] items-center justify-center rounded-full border-2 text-lg font-semibold transition-all ${
-                      selectedRating === value
+                    className={`flex h-[50px] w-[50px] items-center justify-center rounded-full border-2 text-lg font-semibold transition-all ${selectedRating === value
                         ? "scale-110 border-[#41594d] bg-[#41594d] text-white"
                         : "border-[#d4d7d1] bg-white text-[#41594d] hover:scale-105 hover:border-[#41594d] hover:bg-[#e8ebe6]"
-                    }`}
+                      }`}
                   >
                     {value}
                   </button>
