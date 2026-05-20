@@ -222,6 +222,10 @@ export const buildAnswersFromCbtFormulationEntry = (entry) => ({
       entry?.recentHappening?.trim?.() || entry?.triggers?.trim?.(),
     ),
   },
+
+
+
+  
   thoughts: {
     text: entry?.thoughts || "",
     completed: Boolean(entry?.thoughts?.trim?.()),
