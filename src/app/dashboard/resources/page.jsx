@@ -50,7 +50,7 @@ export default function MyResources() {
               Listen Now
             </Link>
           </div>
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+          <Link href="/dashboard/resources/bilateral" className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 block cursor-pointer group">
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-stone-100 rounded-xl flex items-center justify-center">
                 <svg
@@ -73,7 +73,7 @@ export default function MyResources() {
                   />
                 </svg>
               </div>
-              <button className="w-10 h-10 border border-stone-300 rounded-lg flex items-center justify-center hover:bg-stone-50 transition-colors">
+              <div className="w-10 h-10 border border-stone-300 rounded-lg flex items-center justify-center group-hover:bg-stone-50 transition-colors">
                 <svg
                   className="w-5 h-5 text-stone-700"
                   fill="currentColor"
@@ -81,7 +81,7 @@ export default function MyResources() {
                 >
                   <path d="M8 5v14l11-7z" />
                 </svg>
-              </button>
+              </div>
             </div>
             <h3 className="text-xl font-semibold text-[#292524] mb-2">
               Bilateral Settings
@@ -89,13 +89,10 @@ export default function MyResources() {
             <p className="text-[#7A7A7A] text-sm leading-relaxed mb-4">
               Customize your visual and audio stimulation preferences.
             </p>
-            <Link
-              href="/dashboard/resources/bilateral"
-              className="text-[#4A7C59] text-sm font-medium hover:underline"
-            >
+            <span className="text-[#4A7C59] text-sm font-medium group-hover:underline">
               Listen Now
-            </Link>
-          </div>
+            </span>
+          </Link>
           <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">

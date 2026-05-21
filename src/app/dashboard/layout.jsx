@@ -6,7 +6,7 @@ import Header from "@/components/dashboard/Header";
 import { useStoredAuth } from "@/redux/authStorage";
 
 const bgImages = {
-  "/dashboard": "https://i.ibb.co.com/LDkH9SNf/I-want-a-beautiful-whimsical-watercolour-illustration-of-a-swedish-forest-with-a-fox-in-the-distanc.jpg",
+  "/dashboard": "https://i.ibb.co.com/CpMMp7x1/my-space-image-2.jpg",
   "/dashboard/progress":
     "https://i.ibb.co.com/4g9Xd58T/5c2b0c67-9d58-431f-b7a8-e781abf72d11.jpg",
   "/dashboard/homework":
@@ -27,7 +27,15 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { token, hasHydrated } = useStoredAuth();
-  const currentBg = bgImages[pathname] || "/homeImage/background.jpg";
+  
+  let currentBg = bgImages[pathname] || "/homeImage/background.jpg";
+  if (
+    pathname.startsWith("/dashboard/EMDRCompanion") ||
+    pathname.startsWith("/dashboard/new-roadmap") ||
+    pathname.startsWith("/dashboard/assessments")
+  ) {
+    currentBg = "https://i.ibb.co.com/CpMMp7x1/my-space-image-2.jpg";
+  }
   const isSessionPage = pathname === "/dashboard/resources/bilateral/session";
 
   useEffect(() => {

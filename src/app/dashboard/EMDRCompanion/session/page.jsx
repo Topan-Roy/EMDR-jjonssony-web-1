@@ -144,7 +144,7 @@ export default function EMDRSession() {
             item?.mediaType === "video" &&
             item?.status === "active" &&
             item?.categoryId?.categoryName?.trim()?.toLowerCase() ===
-              FIXED_SESSION_VIDEO_CATEGORY
+            FIXED_SESSION_VIDEO_CATEGORY
         );
 
         if (!sessionVideo?.url) {
@@ -217,16 +217,16 @@ export default function EMDRSession() {
         0,
         Math.floor(
           watchedSecondsOverride ??
-            videoRef.current?.currentTime ??
-            currentTime
+          videoRef.current?.currentTime ??
+          currentTime
         )
       );
       const resolvedTotalSeconds = Math.max(
         0,
         Math.floor(
           totalSecondsOverride ??
-            videoRef.current?.duration ??
-            duration
+          videoRef.current?.duration ??
+          duration
         )
       );
 
@@ -264,7 +264,7 @@ export default function EMDRSession() {
   const remainingTime = Math.max(duration - currentTime, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-300 to-stone-400 flex flex-col items-center justify-center p-6 rounded-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-stone-300/40 to-stone-400/50 flex flex-col items-center justify-center p-6 rounded-2xl">
       <div className="relative w-full max-w-5xl">
         <div className="relative">
           {isLoadingVideo ? (
@@ -312,7 +312,7 @@ export default function EMDRSession() {
               <button
                 onClick={async () => {
                   const activeJourneyId = journeyId || localStorage.getItem("activeJourneyId");
-                  
+
                   if (activeJourneyId && token && baseUrl) {
                     await updateSessionProgress({
                       baseUrl,

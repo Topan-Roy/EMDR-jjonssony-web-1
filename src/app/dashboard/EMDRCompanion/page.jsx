@@ -951,9 +951,9 @@ export default function EMDRCompanion() {
   const suggestedPositiveBelief = getSuggestedPositiveBelief(currentNegativeBelief);
 
   return (
-    <div className=" rounded-[1em] bg-[#f6f7f4] p-6 shadow-[0_10px_25px_rgba(0,0,0,0.06)] md:mt-10 md:p-10">
+    <div className=" rounded-[1em] bg-[#f6f7f4]/50 p-6 shadow-[0_10px_25px_rgba(0,0,0,0.06)] md:mt-10 md:p-10">
       <h2 className="mb-3 text-center text-[28px] text-[#3e4e44]">
-        Sigmond
+        Sigmund
       </h2>
       <p className="mb-6 text-[18px] leading-7 text-[#2d2d2d]">
         I&apos;m here to gently guide you through preparing for your first EMDR
@@ -967,7 +967,7 @@ export default function EMDRCompanion() {
 
       <div
         ref={chatboxRef}
-        className="h-[500px] overflow-y-auto rounded-xl border border-[#cfcfcf] bg-white p-6 text-[17px] leading-7"
+        className="h-[500px] overflow-y-auto rounded-xl border border-[#cfcfcf] bg-white/50 p-6 text-[17px] leading-7"
       >
         <div className="space-y-4">
           {messages.map((message) => (
@@ -1029,8 +1029,8 @@ export default function EMDRCompanion() {
                     type="button"
                     onClick={() => setSelectedBeliefs([suggestedPositiveBelief])}
                     className={`w-full rounded-md border-2 p-4 text-center text-base font-medium ${selectedBeliefs[0] === suggestedPositiveBelief
-                        ? "border-[#41594d] bg-[#41594d] text-white"
-                        : "border-[#d4b896] bg-white text-[#2d2d2d]"
+                      ? "border-[#41594d] bg-[#41594d] text-white"
+                      : "border-[#d4b896] bg-white text-[#2d2d2d]"
                       }`}
                   >
                     &quot;{suggestedPositiveBelief}&quot;
@@ -1085,8 +1085,8 @@ export default function EMDRCompanion() {
                                 })
                               }
                               className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-all ${isSelected
-                                  ? "border-[#41594d] bg-[#41594d] text-white"
-                                  : "border-[#e0e3dd] bg-white text-[#2d2d2d] hover:border-[#41594d] hover:bg-[#e8ebe6]"
+                                ? "border-[#41594d] bg-[#41594d] text-white"
+                                : "border-[#e0e3dd] bg-white text-[#2d2d2d] hover:border-[#41594d] hover:bg-[#e8ebe6]"
                                 }`}
                             >
                               {belief}
@@ -1170,8 +1170,8 @@ export default function EMDRCompanion() {
                     onClick={() => setSelectedRating(value)}
                     disabled={isSyncingSession}
                     className={`flex h-[50px] w-[50px] items-center justify-center rounded-full border-2 text-lg font-semibold transition-all ${selectedRating === value
-                        ? "scale-110 border-[#41594d] bg-[#41594d] text-white"
-                        : "border-[#d4d7d1] bg-white text-[#41594d] hover:scale-105 hover:border-[#41594d] hover:bg-[#e8ebe6]"
+                      ? "scale-110 border-[#41594d] bg-[#41594d] text-white"
+                      : "border-[#d4d7d1] bg-white text-[#41594d] hover:scale-105 hover:border-[#41594d] hover:bg-[#e8ebe6]"
                       }`}
                   >
                     {value}
