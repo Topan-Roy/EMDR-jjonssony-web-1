@@ -8,6 +8,7 @@ import { useStoredAuth } from "@/redux/authStorage";
 
 const SPEED_MS = { slow: 2600, medium: 2000, fast: 1500 };
 const TOTAL_SETS = 34;
+const HIT_SOUND_SYNC_OFFSET_MS = 20;
 
 function speak(text) {
   if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -165,6 +166,8 @@ function SessionContent() {
   const intervalRef = useRef(null);
   const hitTimeoutRef = useRef(null);
   const audioRef = useRef(null);
+  const audioPoolRef = useRef([]);
+  const audioPoolIndexRef = useRef(0);
   const isPausedRef = useRef(false);
   const isRightRef = useRef(false);
   const currentSetRef = useRef(1);
@@ -217,10 +220,32 @@ function SessionContent() {
   useEffect(() => {
     if (!selectedSound?.url) return;
     const audio = new Audio(selectedSound.url);
+    const audioPool = Array.from({ length: 2 }, () => {
+      const item = new Audio(selectedSound.url);
+      item.preload = "auto";
+      item.volume = 0.7;
+      return item;
+    });
+
     audioRef.current = audio;
+    audioPoolRef.current = audioPool;
+    audioPoolIndexRef.current = 0;
     audio.loop = false;
     audio.volume = 0.7;
-    return () => { audio.pause(); audio.currentTime = 0; audioRef.current = null; };
+    audio.preload = "auto";
+    audio.load();
+    audioPool.forEach((item) => item.load());
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      audioPool.forEach((item) => {
+        item.pause();
+        item.currentTime = 0;
+      });
+      audioRef.current = null;
+      audioPoolRef.current = [];
+    };
   }, [selectedSound]);
 
   useEffect(() => {
@@ -261,14 +286,13 @@ function SessionContent() {
 
     const playSound = () => {
       if (audioRef.current && !isPausedRef.current) {
-        const hitSound = audioRef.current.cloneNode(true);
+        const pool = audioPoolRef.current.length ? audioPoolRef.current : [audioRef.current];
+        const hitSound = pool[audioPoolIndexRef.current % pool.length];
+        audioPoolIndexRef.current += 1;
+        hitSound.pause();
         hitSound.currentTime = 0;
-        hitSound.volume = audioRef.current.volume;
-        if (Number.isFinite(audioRef.current.duration) && audioRef.current.duration > 0) {
-          const soundDurationMs = audioRef.current.duration * 1000;
-          const targetDurationMs = Math.max(120, speedMs * 0.85);
-          hitSound.playbackRate = Math.min(4, Math.max(0.5, soundDurationMs / targetDurationMs));
-        }
+        hitSound.volume = 0.7;
+        hitSound.playbackRate = 1;
         hitSound.play().catch(() => {});
       }
     };
@@ -299,7 +323,7 @@ function SessionContent() {
       });
 
       clearTimeout(hitTimeoutRef.current);
-      hitTimeoutRef.current = setTimeout(finishSideHit, speedMs);
+      hitTimeoutRef.current = setTimeout(finishSideHit, Math.max(0, speedMs - HIT_SOUND_SYNC_OFFSET_MS));
     };
 
     const timeout = setTimeout(() => {
