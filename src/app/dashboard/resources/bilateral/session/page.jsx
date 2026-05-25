@@ -24,18 +24,34 @@ function StimulusVisual({ item, style, ariaHidden = false }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
-  const [fallbackVideoUrl, setFallbackVideoUrl] = useState("");
-  const useVideoFallback = fallbackVideoUrl === item?.img;
+  const [corsReady, setCorsReady] = useState(false);
+  const [canvasFailed, setCanvasFailed] = useState(false);
 
+  // Set crossOrigin BEFORE src so browser loads with proper CORS headers
   useEffect(() => {
     if (item?.mediaType !== "video" || !videoRef.current) return;
-
-    videoRef.current.currentTime = 0;
-    videoRef.current.play().catch(() => {});
+    const video = videoRef.current;
+    setCanvasFailed(false);
+    setCorsReady(false);
+    video.pause();
+    video.removeAttribute("src");
+    video.crossOrigin = "anonymous";
+    video.src = item.img;
+    video.load();
+    const onCanPlay = () => {
+      video.play().catch(() => {});
+      setCorsReady(true);
+    };
+    video.addEventListener("canplay", onCanPlay, { once: true });
+    return () => {
+      video.removeEventListener("canplay", onCanPlay);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
   }, [item?.img, item?.mediaType]);
 
+  // Canvas-based white background removal
   useEffect(() => {
-    if (item?.mediaType !== "video" || !videoRef.current || !canvasRef.current) return;
+    if (!corsReady || item?.mediaType !== "video" || !videoRef.current || !canvasRef.current) return;
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -86,7 +102,7 @@ function StimulusVisual({ item, style, ariaHidden = false }) {
 
         context.putImageData(frame, 0, 0);
       } catch (error) {
-        setFallbackVideoUrl(item.img);
+        setCanvasFailed(true);
         return;
       }
 
@@ -96,32 +112,27 @@ function StimulusVisual({ item, style, ariaHidden = false }) {
     drawFrame();
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [item?.img, item?.mediaType]);
+  }, [corsReady, item?.img, item?.mediaType]);
 
   if (!item?.img) return null;
 
   if (item.mediaType === "video") {
     return (
       <>
+        {/* Hidden video used as canvas source */}
         <video
           ref={videoRef}
-          key={item.img}
-          src={item.img}
-          poster={item.poster || undefined}
           muted
-          autoPlay
           loop
           playsInline
           preload="auto"
-          crossOrigin="anonymous"
           aria-hidden
-          style={{ display: useVideoFallback ? "block" : "none", ...style }}
+          style={{ display: "none" }}
         />
-        {!useVideoFallback && (
+        {/* Canvas with white-bg removed — primary display */}
+        {!canvasFailed && (
           <canvas
             ref={canvasRef}
             width={220}
@@ -129,6 +140,25 @@ function StimulusVisual({ item, style, ariaHidden = false }) {
             aria-hidden={ariaHidden}
             aria-label={ariaHidden ? undefined : item.name}
             style={style}
+          />
+        )}
+        {/* Fallback: show video directly, clip to circle to hide white box */}
+        {canvasFailed && (
+          <video
+            key={item.img}
+            src={item.img}
+            muted
+            autoPlay
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden={ariaHidden}
+            style={{
+              ...style,
+              borderRadius: "50%",
+              clipPath: "circle(50%)",
+              objectFit: "cover",
+            }}
           />
         )}
       </>
@@ -144,6 +174,7 @@ function StimulusVisual({ item, style, ariaHidden = false }) {
     />
   );
 }
+
 
 function SessionContent() {
   const searchParams = useSearchParams();
@@ -513,7 +544,7 @@ function SessionContent() {
             top: currentPos.top || "40%",
             transform: `translateX(-50%) translateY(-50%) rotate(${movementTransform.rotation}deg) scaleX(${movementTransform.scaleX})`,
             transition: `left ${speedMs}ms linear, top ${speedMs}ms linear, transform 220ms ease`,
-            filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.15))",
+            filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.2))",
           }}
         >
           <StimulusVisual
